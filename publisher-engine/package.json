@@ -1,0 +1,38 @@
+{
+  "name": "publisher-engine",
+  "version": "1.0.0",
+  "description": "AI Spore TG + X Publisher Engine V1",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "run-once": "node dist/cli/runOnce.js",
+    "dry-run-preview": "node dist/cli/dryRunPreview.js",
+    "snake": "node scripts/snake_server.cjs",
+    "bot": "tsx scripts/dev_bot.ts",
+    "dev": "pnpm run bot",
+    "start": "pnpm run bot",
+    "simulate": "node scripts/simulate_scenarios.cjs"
+  },
+  "dependencies": {
+    "@solana/spl-token": "^0.4.14",
+    "@solana/web3.js": "^1.98.4",
+    "better-sqlite3": "^12.5.0",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.2.3",
+    "grammy": "^1.38.4",
+    "node-cron": "^4.2.1",
+    "twitter-api-v2": "^1.28.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^24.10.1",
+    "@types/node-cron": "^3.0.11",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3"
+    ]
+  }
+}

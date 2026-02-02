@@ -1,0 +1,41 @@
+import 'dotenv/config'
+import { Telegraf } from 'telegraf'
+
+const bot = new Telegraf(process.env.BOT_TOKEN)
+const CHAT = Number(process.env.CHAT_ID)
+
+function mention(user){
+  const name = [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || 'friend'
+  return user.username ? `@${user.username}` : `<a href="tg://user?id=${user.id}">${name}</a>`
+}
+
+async function greet(ctx, user){
+  const text = `👋 Welcome ${mention(user)} to AI Spore | Founding Players!\nSay hi and run /ping.\nEvening drops daily at 18:00 (EET).`
+  await ctx.telegram.sendMessage(CHAT, text, { parse_mode: 'HTML', disable_web_page_preview: true })
+}
+
+bot.on('chat_join_request', async ctx => {
+  try {
+    await ctx.telegram.approveChatJoinRequest(CHAT, ctx.chatJoinRequest.from.id)
+    await greet(ctx, ctx.chatJoinRequest.from)
+  } catch (e) {}
+})
+
+bot.on('new_chat_members', async ctx => {
+  for (const m of ctx.message.new_chat_members) {
+    await greet(ctx, m)
+  }
+})
+
+async function clearWebhook(){
+  try { await fetch(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/deleteWebhook?drop_pending_updates=true`) } catch {}
+}
+
+;(async () => {
+  await clearWebhook()
+  await bot.launch()
+  console.log('spore-welcome online')
+})()
+
+process.once('SIGINT', () => bot.stop('SIGINT'))
+process.once('SIGTERM', () => bot.stop('SIGTERM'))

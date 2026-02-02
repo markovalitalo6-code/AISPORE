@@ -1,0 +1,41 @@
+import "dotenv/config";
+console.log('welcome boot', new Date().toISOString(), 'BOT_TOKEN len=', (process.env.BOT_TOKEN||'').length);
+import { Telegraf } from "telegraf";
+import { wireReferrals } from "./src/bot_referrals.mjs";
+
+const token = process.env.BOT_TOKEN;
+if (!token) { console.error("BOT_TOKEN missing"); process.exit(1); }
+
+const bot = new Telegraf(token, { handlerTimeout: 90000 });
+
+
+
+bot.command('ping', async (ctx) => {
+  try { await ctx.reply('pong ' + Date.now()); }
+  catch(e){ console.error('ping err', e?.response?.description || e?.message); }
+});
+bot.command('badge', async (ctx) => {
+  try {
+    const { createReadStream } = await import('fs');
+    const name = (ctx.from?.username || ('user_' + ctx.from?.id));
+    await ctx.replyWithDocument(
+      { source: createReadStream('assets/badges/badge_ok.png'), filename: 'badge.png' },
+      { caption: '@' + name + ' — Welcome Badge' }
+    );
+  } catch(e) {
+    console.error('badge doc err', e?.response?.description || e?.message);
+    await ctx.reply('badge failed: ' + (e?.response?.description || e?.message));
+  }
+});
+  } catch(e) {
+    console.error('badge send err', e?.response?.description || e?.message);
+  }
+});
+try { await bot.telegram.deleteWebhook({ drop_pending_updates: true }); } catch {}
+
+wireReferrals(bot);
+await await bot.telegram.getMe().then(m=>console.log('getMe ok', m.username)).catch(e=>console.error('getMe ERR', e?.response?.description||e?.message));
+bot.launch().then(()=>console.log('launch ok')).catch(e=>console.error('launch ERR', e?.response?.description||e?.message));
+
+process.once("SIGINT", () => bot.stop("SIGINT"));
+process.once("SIGTERM", () => bot.stop("SIGTERM"));

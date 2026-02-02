@@ -1,0 +1,102 @@
+[
+  {
+    "id": "x_post_001",
+    "campaignId": "camp_001",
+    "title": "AI Spore – the origin story",
+    "rawTemplate": "Day 1: AI SPORE is not just another meme project. It started as a failed attempt to build everything manually… and turned into a full multi-AI lab. 🧪🍄\n\nWe burned nights fixing broken bots. Then we decided: let the AIs build the engine, and humans focus on vision.\n\nFollow for the full build story in public. #AISpore #BuildInPublic",
+    "channel": "x",
+    "scheduledAt": "2025-12-01T09:00:00Z",
+    "tags": ["story", "origin", "buildinpublic"],
+    "media": []
+  },
+  {
+    "id": "x_post_002",
+    "campaignId": "camp_001",
+    "title": "From chaos to orchestrator",
+    "rawTemplate": "Day 2: We used to copy-paste code between chats, fixing one bug and breaking three. Chaos. 🤯\n\nNow we have an Orchestrator: OJ (conductor), Claude (architect), Gemini (builder). Each AI has a clear role. No more random hacking – just a controlled AI orchestra.\n\nThis same engine will power all future AISpore drops. #AI #AISpore",
+    "channel": "x",
+    "scheduledAt": "2025-12-02T09:00:00Z",
+    "tags": ["orchestrator", "aiagents"],
+    "media": []
+  },
+  {
+    "id": "x_post_003",
+    "campaignId": "camp_001",
+    "title": "Publisher Engine V1 online",
+    "rawTemplate": "Day 3: AISpore Publisher Engine V1 is now alive. ⚙️\n\n✅ Shared content store (texts, media, chest videos)\n✅ Routing to Telegram & X\n✅ Dry-run mode so we never spam by accident\n\nNext step: swap demo posts to real narrative and start a daily drip of updates. #AISpore #Automation",
+    "channel": "x",
+    "scheduledAt": "2025-12-03T09:00:00Z",
+    "tags": ["engine", "automation"],
+    "media": []
+  },
+  {
+    "id": "x_post_004",
+    "campaignId": "camp_001",
+    "title": "Chest mechanic – slow reveal",
+    "rawTemplate": "Day 4: The chest is the heart of AISpore. 🧰\n\nThe chest doesn’t just open randomly. It reacts to progress:\n• Milestones hit → it trembles\n• Community grows → glow increases\n• Big wins → the lid finally opens\n\nNo empty hype – only progression tied to real milestones. #Gamified #AISpore",
+    "channel": "x",
+    "scheduledAt": "2025-12-04T09:00:00Z",
+    "tags": ["chest", "gamified"],
+    "media": []
+  },
+  {
+    "id": "x_post_005",
+    "campaignId": "camp_001",
+    "title": "Why we’re obsessed with automation",
+    "rawTemplate": "Day 5: We don’t want a project that dies when the founder is tired.\n\nAISpore must breathe on its own:\n• Auto posts to X\n• Auto posts to TG\n• Auto tracking of referrals and chest winners\n\nHumans focus on ideas. The bot army handles the grind. #Automation #Crypto",
+    "channel": "x",
+    "scheduledAt": "2025-12-05T09:00:00Z",
+    "tags": ["automation", "bots"],
+    "media": []
+  },
+  {
+    "id": "x_post_006",
+    "campaignId": "camp_001",
+    "title": "Badges & early believers",
+    "rawTemplate": "Day 6: OGs matter. Early people who bring life into the community deserve more than a simple 'gm'.\n\nAISpore will track:\n• Who invites new members\n• Who is active when others are sleeping\n• Who pushes the story forward\n\nThese people get badges and real advantages in future launches. #Community",
+    "channel": "x",
+    "scheduledAt": "2025-12-06T09:00:00Z",
+    "tags": ["badges", "community"],
+    "media": []
+  },
+  {
+    "id": "x_post_007",
+    "campaignId": "camp_001",
+    "title": "No manual posting policy",
+    "rawTemplate": "Day 7: Rule inside AISpore lab:\n\n❌ No manual posting as the main system\n✅ Everything must be pluggable into the Publisher Engine\n\nIf we need to post it often, the engine must learn it.\nIf it can be tracked, it will be.\n\nWe build infrastructure first – hype comes on top. #AISpore #Infra",
+    "channel": "x",
+    "scheduledAt": "2025-12-07T09:00:00Z",
+    "tags": ["rules", "infra"],
+    "media": []
+  },
+  {
+    "id": "x_post_008",
+    "campaignId": "camp_001",
+    "title": "MC layered economy (sneak peek)",
+    "rawTemplate": "Day 8: The prize pool will NOT be random.\n\nWe’re designing an MC layered economy:\n• Different market cap levels unlock different chest events\n• Some stages reward holders\n• Some stages give exposure boosts\n\nNo promises yet – but the logic is being designed like a real product, not a lottery. #Tokenomics",
+    "channel": "x",
+    "scheduledAt": "2025-12-08T09:00:00Z",
+    "tags": ["mc", "economy"],
+    "media": []
+  },
+  {
+    "id": "x_post_009",
+    "campaignId": "camp_001",
+    "title": "What can go wrong (and how we avoid it)",
+    "rawTemplate": "Day 9: We’ve already failed once with a broken TG bot and half-manual setup. That’s a gift.\n\nWe’ve seen:\n• What breaks under pressure\n• How confusing it is when everything is manual\n\nAISpore V2 is built from that pain. Less chaos, more structure. #AISpore #LessonsLearned",
+    "channel": "x",
+    "scheduledAt": "2025-12-09T09:00:00Z",
+    "tags": ["risk", "lessons"],
+    "media": []
+  },
+  {
+    "id": "x_post_010",
+    "campaignId": "camp_001",
+    "title": "Next: connect X and TG fully",
+    "rawTemplate": "Day 10: Publisher Engine V1 is live in dry-run. Next steps:\n\n1) Swap demo posts → real AISpore story (in progress)\n2) Hook X API (once keys & safety rules are ready)\n3) Fix and relaunch AISpore TG bot with badges + chest logic\n\nThis is not just a token. It’s a lab for AI-driven communities. #AISpore",
+    "channel": "x",
+    "scheduledAt": "2025-12-10T09:00:00Z",
+    "tags": ["roadmap", "next"],
+    "media": []
+  }
+]

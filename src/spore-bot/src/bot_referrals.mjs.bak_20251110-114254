@@ -1,0 +1,53 @@
+import { ensureStores, getMyLink, recordReferral, upsertUser, statsFor } from './tools/referral_store.mjs';
+import { ensureBadge } from './tools/badge.mjs';export function wireReferrals(bot){
+  ensureStores();  bot.start(async (ctx) => {
+    try {
+      const user = ctx.from || {};
+      const userId = user.id;
+      const payload = (ctx.startPayload || '').trim();      upsertUser(userId, { username: user.username, first_name: user.first_name, last_name: user.last_name });      if (payload && /^ref_\d+$/.test(payload)){
+        recordReferral(userId, payload);
+        await ctx.reply(`Tervetuloa! Liityit kutsulla: ${payload}.`);
+      } else {
+        await ctx.reply('Tervetuloa AI Sporeen! Käytä /myref saadaksesi oman kutsulinkkisi.');
+      }
+    } catch (e){
+      console.error(e);
+    }
+  });  bot.command('myref', async (ctx) => {
+    const userId = ctx.from?.id;
+    const link = getMyLink(userId);
+    await ctx.reply(`Tässä sinun henkilökohtainen kutsulinkkisi:\n${link}`);
+  });  bot.command('badge', async (ctx) => {
+    const username = ctx.from?.username || `user_${ctx.from?.id}`;
+    const p = await ensureBadge(username);
+    await 
+  {
+    const fetch=require("node-fetch");
+    const name=(ctx.from?.username||`user_${ctx.from?.id}`);
+    const url=`https://via.placeholder.com/600x300.png?text=${encodeURIComponent("AI Spore Badge: @" + name)}`;
+    const res=await fetch(url);
+    if(!res.ok) throw new Error("fetch image failed "+res.status);
+    const buf=await res.buffer();
+    
+{
+  const fs = require("fs");
+  const path = require("path");
+  const name = (ctx.from?.username || `user_${ctx.from?.id}`);
+  const abs = path.resolve("assets/badges/badge_ok.png");
+  const buf = fs.readFileSync(abs);
+  console.log("badge file", abs, "bytes", buf.length);
+  try {
+    await ctx.replyWithPhoto({ source: buf, filename: "badge.png" }, { caption: `@${name} — Welcome Badge` });
+  } catch (e) {
+    console.error("sendPhoto failed, fallback:", e?.message);
+    await ctx.replyWithDocument({ source: buf, filename: "badge.png" }, { caption: `@${name} — Welcome Badge` });
+  }
+}
+
+  }
+
+  });  bot.command('mystats', async (ctx) => {
+    const { myCode, joined } = statsFor(ctx.from?.id);
+    await ctx.reply(`Koodisi: ${myCode}\nLiittyneitä kutsusi kautta: ${joined}`);
+  });
+}

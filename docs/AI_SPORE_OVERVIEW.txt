@@ -1,0 +1,51 @@
+AI SPORE – PROJECT OVERVIEW
+===========================
+
+Sijainti Work Spacessa:
+  ~/hub/AI-WorkSpace/01_projects/ai-spore
+
+
+RAKENNE:
+--------
+
+src/
+  chest-overlay/
+    - Overlay / Vite-projekti (arkkupeli, canon.json)
+    - OBS Browser Source käyttää tätä
+    - Kaikki overlay-grafiikka, animaatiot ja frontend-logiikka
+
+  spore-bot/
+    - Telegram-botti (referralit, badge, hype, daily-postit)
+    - bot.mjs
+    - data/ (referrals.json, users.json, state filet)
+    - assets/badges/
+    - src/tools/ (badge & referral -koodi)
+    - node_modules/
+
+snapshots/
+  spore-bot.bak-20251109-220820/
+    = Täydellinen varmuuskopio spore-botista ennen 9.11.2025 muutoksia
+
+  spore-bot-backup-20251110-074753.tar.gz
+    = Pakattu backup, kultainen versio ennen 10.11.2025 muutoksia
+
+
+ENV-TIEDOSTO:
+-------------
+AI Spore käyttää Work Spacen juurihakemiston .env-tiedostoa:
+
+  ~/hub/AI-WorkSpace/03_env_and_keys/.env.ai-spore
+
+
+HUOMIOITA:
+----------
+- Kaikki uusi kehitys tehdään TÄMÄN Work Space -rakenteen sisällä.
+- Vanhat juurikansiot:
+      ~/hub/chest-overlay
+      ~/hub/spore-bot
+  eivät ole enää aktiivisessa käytössä, vaan ne ovat historiallista dataa.
+
+- Overlay ja spore-bot voivat tulevaisuudessa keskustella keskenään
+  esimerkiksi WebSocketin tai Magic Eden -integraation kautta riippuen
+  projektin suunnasta.
+

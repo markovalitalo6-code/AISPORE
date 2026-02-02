@@ -1,0 +1,7 @@
+AI Spore Snapshot Restore Point
+Date: $(date)
+System: MacOS / PM2
+State: Stable core build with working BOT + DAILY
+Next step: referral + badge activation
+BOT_TOKEN active
+CHAT_ID = -1003059664502

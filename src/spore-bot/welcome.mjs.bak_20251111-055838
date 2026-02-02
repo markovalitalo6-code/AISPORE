@@ -1,0 +1,51 @@
+import 'dotenv/config';
+import { Telegraf } from 'telegraf';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { createReadStream, statSync } from 'fs';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const BOT_TOKEN = process.env.BOT_TOKEN;
+
+if (!BOT_TOKEN) {
+  console.error('BOT_TOKEN missing from environment');
+  process.exit(1);
+}
+
+const bot = new Telegraf(BOT_TOKEN);
+
+// /ping — nopea eläväisyystesti
+bot.command('ping', async (ctx) => {
+  try {
+    await ctx.reply('pong ' + new Date().toISOString());
+  } catch (e) {
+    console.error('ping err', e?.response?.description || e?.message);
+  }
+});
+
+// /badge — lähettää paikallisen PNG:n dokumenttina (varmin tapa välttää IMAGE_PROCESS_FAILED)
+bot.command('badge', async (ctx) => {
+  const username = (ctx.from?.username || ('user_' + ctx.from?.id));
+  const p = join(__dirname, 'assets/badges/badge_ok.png');
+  try {
+    statSync(p);
+    await ctx.replyWithDocument(
+      { source: createReadStream(p), filename: 'badge.png' },
+      { caption: '@' + username + ' — Welcome Badge' }
+    );
+  } catch (e) {
+    console.error('badge err', e?.response?.description || e?.message);
+    await ctx.reply('badge error: ' + (e?.response?.description || e?.message));
+  }
+});
+
+bot.telegram.getMe()
+  .then(m => console.log('getMe ok', m.username))
+  .catch(e => console.error('getMe ERR', e?.response?.description || e?.message));
+
+bot.launch()
+  .then(() => console.log('launch ok'))
+  .catch(e => console.error('launch ERR', e?.response?.description || e?.message));
+
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));

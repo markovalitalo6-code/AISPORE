@@ -1,0 +1,9 @@
+[
+  {
+    "id": "camp_001",
+    "name": "Launch Week",
+    "description": "Initial launch campaign",
+    "isActive": true,
+    "posts": []
+  }
+]

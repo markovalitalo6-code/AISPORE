@@ -1,0 +1,44 @@
+
+import fs from "fs";
+import path from "path";
+import { audit } from "./audit";
+import { topTickets } from "./tickets";
+
+export type Winner = { tgId: number; username?: string; weight: number; prize: string };
+
+function pickWeighted(items: {tgId:number; username?:string; weight:number}[], count: number){
+  const picked: Winner[] = [];
+  const pool = items.slice();
+  for (let i=0; i<count && pool.length; i++){
+    const sum = pool.reduce((a,b)=>a + Math.max(0,b.weight), 0);
+    if (sum <= 0) break;
+    let r = Math.random() * sum;
+    let idx = 0;
+    for (; idx<pool.length; idx++){
+      r -= Math.max(0, pool[idx].weight);
+      if (r <= 0) break;
+    }
+    const w = pool.splice(Math.min(idx, pool.length-1), 1)[0];
+    picked.push({ tgId: w.tgId, username: w.username, weight: w.weight, prize: "" });
+  }
+  return picked;
+}
+
+function outFile(eventId: number){
+  const outDir = path.resolve(process.cwd(), "exports");
+  if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+  return path.join(outDir, `winners_event_${eventId}.json`);
+}
+
+export function runChestDraw(eventId: number){
+  const top = topTickets(200);
+  const candidates = top.map(x => ({ tgId: x.tgId, username: x.username, weight: Math.max(1, Math.floor(x.score)) }));
+  const winners = pickWeighted(candidates, 3);
+
+  const prizes = ["ROLE: Sporescout", "STATUS: Founding Aura", "TICKET: Bonus Entry"];
+  winners.forEach((w,i)=> w.prize = prizes[i] || "STATUS");
+
+  fs.writeFileSync(outFile(eventId), JSON.stringify({ eventId, winners, at: Date.now() }, null, 2), "utf8");
+  audit(`CHEST event=${eventId} winners=${winners.map(w=>w.tgId).join(",")}`);
+  return winners;
+}

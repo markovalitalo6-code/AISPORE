@@ -1,0 +1,90 @@
+// src/components/SoundFX.jsx
+import { useEffect, useRef, useState } from "react";
+
+/**
+ * Kevyt sound manager ilman ulkoisia tiedostoja.
+ * - Kuuntelee:
+ *    - spore:result { outcome: 'win'|'empty' }
+ *    - spore:sound:on / spore:sound:off
+ * - Soittaa:
+ *    - WIN: kirkas 2-nuottinen “pling”
+ *    - EMPTY: matalampi “thud”
+ */
+
+export default function SoundFX() {
+  const [enabled, setEnabled] = useState(true);
+  const audioRef = useRef(null);
+
+  // Tee audiokonteksti laiskasti, kun ensimmäinen ääni soitetaan
+  function getCtx() {
+    if (!audioRef.current) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      audioRef.current = new Ctx();
+    }
+    return audioRef.current;
+  }
+
+  function beep({ freq = 440, dur = 0.12, type = "sine", gain = 0.2, startAt = 0 }) {
+    try {
+      const ctx = getCtx();
+      const t0 = ctx.currentTime + startAt;
+
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0);
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(gain, t0 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+      osc.connect(g).connect(ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.02);
+    } catch {}
+  }
+
+  function playWin() {
+    if (!enabled) return;
+    // kaksi nopeaa nuottia: “pling-pling”
+    beep({ freq: 740, dur: 0.10, type: "sine", gain: 0.22, startAt: 0 });
+    beep({ freq: 988, dur: 0.12, type: "sine", gain: 0.18, startAt: 0.10 });
+  }
+
+  function playEmpty() {
+    if (!enabled) return;
+    // lyhyt “thud” (matalampi, sahalaita + nopea vaimennus)
+    beep({ freq: 160, dur: 0.09, type: "sawtooth", gain: 0.18, startAt: 0 });
+  }
+
+  useEffect(() => {
+    const onRes = (e) => {
+      const outcome = e?.detail?.outcome;
+      if (outcome === "win") playWin();
+      else playEmpty();
+    };
+    const onOn = () => setEnabled(true);
+    const onOff = () => setEnabled(false);
+
+    window.addEventListener("spore:result", onRes);
+    window.addEventListener("spore:sound:on", onOn);
+    window.addEventListener("spore:sound:off", onOff);
+    return () => {
+      window.removeEventListener("spore:result", onRes);
+      window.removeEventListener("spore:sound:on", onOn);
+      window.removeEventListener("spore:sound:off", onOff);
+    };
+  }, [enabled]);
+
+  // (valinnainen) aseta debug-nappi globaaliin käyttöön
+  useEffect(() => {
+    window.__sound = {
+      enable: () => setEnabled(true),
+      disable: () => setEnabled(false),
+      status: () => enabled,
+      testWin: () => playWin(),
+      testEmpty: () => playEmpty(),
+    };
+  }, [enabled]);
+
+  return null; // näkymätön
+}

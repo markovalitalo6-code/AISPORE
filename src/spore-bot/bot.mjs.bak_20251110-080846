@@ -1,0 +1,74 @@
+import 'dotenv/config'
+import { Telegraf } from 'telegraf'
+
+process.env.TZ = 'Europe/Helsinki'
+
+const TOKEN = process.env.BOT_TOKEN || process.env.TG_BOT_TOKEN || ''
+const CHAT = process.env.CHAT_ID
+if (!TOKEN || !CHAT) {
+  console.error('Missing BOT_TOKEN or CHAT_ID')
+  process.exit(1)
+}
+
+const bot = new Telegraf(TOKEN)
+
+bot.start((ctx)=>ctx.reply('AI Spore Host here! /ping, /id'))
+bot.command('ping',(ctx)=>ctx.reply('pong ✅'))
+bot.command('id',(ctx)=>ctx.reply(String(ctx.chat.id)))
+
+async function clearWebhook(){
+  try { await fetch(`https://api.telegram.org/bot${TOKEN}/deleteWebhook?drop_pending_updates=true`) } catch {}
+}
+
+async function send(text){
+  const r = await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ chat_id: CHAT, text, parse_mode:'HTML' })
+  })
+  const j = await r.json()
+  if(!j.ok) throw new Error(j.description||'send failed')
+  return j
+}
+
+function nextDelayAt(hour, minute){
+  const now = new Date()
+  const next = new Date(now)
+  next.setHours(hour, minute, 0, 0)
+  if (next <= now) next.setDate(next.getDate()+1)
+  return next - now
+}
+
+let lastRunKey = ''
+async function dailyTask(){
+  const d = new Date()
+  const key = d.toISOString().slice(0,10)
+  if (key === lastRunKey) return
+  lastRunKey = key
+  const titleEn = 'AI Spore Awakening Update'
+  const bodyEn = 'We continue to the next phase today. Evening drops start at 18:00 (EET) 🔥'
+  const titleFi = 'AI Spore Heräämispäivitys'
+  const bodyFi = 'Jatkamme seuraavaan vaiheeseen tänään. Iltajulkaisut alkavat klo 18:00 (EET) 🔥'
+  const text = `🌱 <b>${titleEn}</b>\n${bodyEn}\n—\n<b>${titleFi}</b>\n${bodyFi}`
+  await send(text)
+  console.log('[daily] sent', key)
+}
+
+function scheduleDailyAt(hour, minute, fn){
+  const first = nextDelayAt(hour, minute)
+  setTimeout(()=>{ fn().catch(console.error); setInterval(()=>fn().catch(console.error), 24*60*60*1000) }, first)
+}
+
+async function main(){
+  await clearWebhook()
+  const me = await bot.telegram.getMe()
+  console.log('[BOT]', me.username, me.id)
+  await bot.launch()
+  console.log('AI Spore bot online')
+  scheduleDailyAt(18, 0, dailyTask)
+}
+
+process.once('SIGINT', () => { try{ bot.stop('SIGINT') } catch{} })
+process.once('SIGTERM', () => { try{ bot.stop('SIGTERM') } catch{} })
+
+main().catch(e=>{ console.error('FATAL', e?.message||e); process.exit(1) })

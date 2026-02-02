@@ -1,0 +1,119 @@
+import 'dotenv/config';
+import { Telegraf } from 'telegraf';
+import { readFileSync, existsSync } from 'fs';
+
+const token =
+  process.env.BOT_TOKEN ||
+  process.env.TG_BOT_TOKEN ||
+  process.env.TELEGRAM_TOKEN;
+
+if (!token) {
+  console.error('BOT_TOKEN puuttuu envistä');
+  process.exit(1);
+}
+
+const bot = new Telegraf(token);
+const BADGE_PNG = 'assets/badges/spore_badge.png';
+const BADGE_JPG = 'assets/badges/spore_badge.jpg';
+
+const cd = new Map();
+function hit(key, ms) {
+  const now = Date.now();
+  const until = cd.get(key) || 0;
+  if (now < until) return false;
+  cd.set(key, now + ms);
+  return true;
+}
+
+bot.command('ping', (ctx) => ctx.reply('pong ' + new Date().toISOString()));
+
+try {
+    const name = ctx.from?.username || ('user_' + who);
+    const p = existsSync(BADGE_PNG) ? BADGE_PNG : (existsSync(BADGE_JPG) ? BADGE_JPG : null);
+    if (!p) return ctx.reply('badge image missing in assets/badges');
+    const buf = readFileSync(p);
+    await ctx.replyWithDocument(
+      { source: buf, filename: p.endsWith('.jpg') ? 'badge.jpg' : 'badge.png' },
+      { caption: '@' + name + ' — Welcome Badge' }
+    );
+  } catch (e) {
+    console.error('/badge err', e?.response?.description || e?.message || e);
+    await ctx.reply('badge failed: ' + (e?.response?.description || e?.message));
+  }
+});
+
+try {
+    const name = ctx.from?.username || ('user_' + who);
+    const p = existsSync(BADGE_JPG) ? BADGE_JPG : (existsSync(BADGE_PNG) ? BADGE_PNG : null);
+    if (!p) return ctx.reply('badge image missing in assets/badges');
+    const buf = readFileSync(p);
+    await ctx.replyWithPhoto(
+      { source: buf, filename: p.endsWith('.jpg') ? 'badge.jpg' : 'badge.png' },
+      { caption: '@' + name + ' — Welcome Badge' }
+    );
+  } catch (e) {
+    console.error('/badge_photo err', e?.response?.description || e?.message || e);
+    await ctx.reply('badge_photo failed: ' + (e?.response?.description || e?.message));
+  }
+});
+
+const TARGET_CHAT = -1003059664502;
+
+bot.on('new_chat_members', async (ctx) => {
+  try {
+    if (ctx.chat?.id !== TARGET_CHAT) return;
+    for (const m of ctx.message?.new_chat_members || []) {
+      const key = 'auto_badge:' + m.id;
+      if (!hit(key, 60000)) continue;
+      const p = existsSync(BADGE_PNG) ? BADGE_PNG : (existsSync(BADGE_JPG) ? BADGE_JPG : null);
+      if (!p) { await ctx.reply('badge image missing in assets/badges'); continue; }
+      const buf = readFileSync(p);
+      const tag = m.username ? '@' + m.username : (m.first_name || 'new member');
+      await ctx.replyWithDocument(
+        { source: buf, filename: p.endsWith('.jpg') ? 'badge.jpg' : 'badge.png' },
+        { caption: `${tag} — Welcome Badge` }
+      );
+    }
+  } catch (e) {
+    console.error('auto-welcome err', e?.response?.description || e?.message || e);
+  }
+});
+
+await bot.telegram.getMe()
+  .then((m)=>console.log('getMe ok', m.username))
+  .catch((e)=>console.error('getMe ERR', e?.response?.description || e?.message));
+
+
+const buf = readFileSync('assets/badges/welcome_badge_final.png');
+    const name = ctx.from?.username || ('user_' + ctx.from?.id);
+    await ctx.replyWithPhoto(
+      { source: buf, filename: 'welcome_badge.png' },
+      { caption: '@' + name + ' — Welcome Badge' }
+    );
+  } catch (e) {
+    console.error('badge err', e?.response?.description || e?.message);
+  }
+});
+
+
+bot.command('badge', async (ctx) => {
+  try {
+    console.log('badge cmd', ctx.from?.id, ctx.chat?.id);
+    const { readFileSync } = await import('fs');
+    const buf = readFileSync('assets/badges/welcome_badge_final.png');
+    const name = ctx.from?.username || ('user_' + ctx.from?.id);
+    await ctx.replyWithPhoto({ source: buf, filename: 'welcome_badge.png' }, { caption: '@' + name + ' - Welcome Badge' });
+  } catch (e) {
+    console.error('badge err', e?.response?.description || e?.message);
+    await ctx.reply('badge failed: ' + (e?.response?.description || e?.message));
+  }
+});
+bot.command('badge_photo', async (ctx) => ctx.telegram.emit('text', ctx.update));
+bot.command('badge_text', async (ctx)=>{ try{ const name=ctx.from?.username||('user_'+ctx.from?.id); await ctx.reply('@'+name+' — Welcome Badge (text OK)'); }catch(e){ console.error('badge_text err', e?.response?.description||e?.message); }});
+bot.on('message', (ctx)=>{ try{ console.log('update message from', ctx.from?.id, 'chat', ctx.chat?.id); }catch{} });
+bot.command('id',(ctx)=>ctx.reply('from '+(ctx.from?.id)+' chat '+(ctx.chat?.id)));
+bot.launch({ dropPendingUpdates: true, allowedUpdates: ["message","callback_query","chat_member","my_chat_member"] });.then(()=>console.log('launch ok'))
+  .catch((e)=>console.error('launch ERR', e?.response?.description || e?.message));
+
+process.once('SIGINT',  () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));

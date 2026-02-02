@@ -1,0 +1,73 @@
+import { Telegraf } from 'telegraf';
+import { readFileSync, existsSync } from 'fs';
+
+const BOT_TOKEN = process.env.BOT_TOKEN;
+if (!BOT_TOKEN) {
+  console.error('BOT_TOKEN puuttuu .env:stä');
+  process.exit(1);
+}
+
+const bot = new Telegraf(BOT_TOKEN);
+
+// Yleinen virhelogitus
+bot.catch((err, ctx) => {
+  console.error('telegraf err:', err?.response?.description || err?.message || err, 'on update', ctx?.update?.update_id);
+});
+
+// /ping
+bot.command('ping', (ctx) => ctx.reply('pong ' + new Date().toISOString()));
+
+// Badge-polut
+const BADGE_PNG = 'assets/badges/spore_badge.png';
+const BADGE_JPG = 'assets/badges/spore_badge.jpg';
+
+// /badge (document .png)
+bot.command('badge', async (ctx) => {
+  try {
+    const name = (ctx.from?.username || ('user_' + ctx.from?.id));
+    const p = existsSync(BADGE_PNG) ? BADGE_PNG : (existsSync(BADGE_JPG) ? BADGE_JPG : null);
+    if (!p) return ctx.reply('badge image missing in assets/badges');
+    const buf = readFileSync(p);
+    const isJpg = p.endsWith('.jpg');
+    const fileName = isJpg ? 'badge.jpg' : 'badge.png';
+    await ctx.replyWithDocument({ source: buf, filename: fileName }, { caption: '@' + name + ' — Welcome Badge' });
+  } catch (e) {
+    console.error('/badge err', e?.response?.description || e?.message || e);
+    await ctx.reply('badge failed: ' + (e?.response?.description || e?.message));
+  }
+});
+
+// /badge_photo (photo .jpg)
+bot.command('badge_photo', async (ctx) => {
+  try {
+    const name = (ctx.from?.username || ('user_' + ctx.from?.id));
+    const p = existsSync(BADGE_JPG) ? BADGE_JPG : (existsSync(BADGE_PNG) ? BADGE_PNG : null);
+    if (!p) return ctx.reply('badge image missing in assets/badges');
+    const buf = readFileSync(p);
+    await ctx.replyWithPhoto({ source: buf, filename: p.endsWith('.jpg') ? 'badge.jpg' : 'badge.png' }, { caption: '@' + name + ' — Welcome Badge' });
+  } catch (e) {
+    console.error('/badge_photo err', e?.response?.description || e?.message || e);
+    await ctx.reply('badge_photo failed: ' + (e?.response?.description || e?.message));
+  }
+});
+
+// Käynnistys
+(async () => {
+  try {
+    const me = await bot.telegram.getMe();
+    console.log('getMe ok', me?.username);
+  } catch (e) {
+    console.error('getMe ERR', e?.response?.description || e?.message || e);
+  }
+  try {
+    await bot.launch();
+    console.log('launch ok');
+  } catch (e) {
+    console.error('launch ERR', e?.response?.description || e?.message || e);
+    process.exit(1);
+  }
+})();
+
+// Siisti sammutus (PM2)
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));

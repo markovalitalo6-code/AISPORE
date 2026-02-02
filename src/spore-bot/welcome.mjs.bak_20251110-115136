@@ -1,0 +1,26 @@
+import "dotenv/config";
+import { Telegraf } from "telegraf";
+import { wireReferrals } from "./src/bot_referrals.mjs";
+
+const token = process.env.BOT_TOKEN;
+if (!token) { console.error("BOT_TOKEN missing"); process.exit(1); }
+
+const bot = new Telegraf(token, { handlerTimeout: 90000 });
+
+
+bot.command('badge', async (ctx) => {
+  try {
+    const { createReadStream } = await import('fs');
+    const name = (ctx.from?.username || ('user_' + ctx.from?.id));
+    await ctx.replyWithDocument({ source: createReadStream('assets/badges/badge_ok.png'), filename: 'badge.png' }, { caption: '@' + name + ' — Welcome Badge' });
+  } catch(e) {
+    console.error('badge send err', e?.response?.description || e?.message);
+  }
+});
+try { await bot.telegram.deleteWebhook({ drop_pending_updates: true }); } catch {}
+
+wireReferrals(bot);
+await bot.launch();
+
+process.once("SIGINT", () => bot.stop("SIGINT"));
+process.once("SIGTERM", () => bot.stop("SIGTERM"));

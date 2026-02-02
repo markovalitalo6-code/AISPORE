@@ -1,0 +1,25 @@
+import { publishToX } from "../channels/x/XPublisher";
+import { loadConfig } from "../core/config";
+import { PlannedPost } from "../core/types";
+
+async function main() {
+  const config = loadConfig();
+
+  const post: PlannedPost = {
+    id: "x_api_test_001",
+    campaignId: "test",
+    title: "AISpore API Connection Test",
+    rawTemplate: "This is a live test message from AISpore Publisher Engine. If you see this, the X API connection works. 🍄🚀",
+    channel: "x",
+    scheduledAt: new Date().toISOString(),
+    tags: ["test", "aispore"],
+    media: []
+  };
+
+  await publishToX(post, config);
+}
+
+main().catch((err) => {
+  console.error("xTest failed:", err);
+});
+

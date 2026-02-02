@@ -1,0 +1,51 @@
+import { Bot } from "grammy";
+import { ensureUserRecord } from "./referral";
+import { ensureBadgesFile } from "./referral.utils";
+
+const GROUP_CHAT_ID = process.env.TELEGRAM_CHAT_ID ?? "";
+
+export async function handleNewGroupMember(
+  bot: Bot,
+  memberUserId: number,
+  memberUsername?: string,
+  memberFirstName?: string
+) {
+  const welcomeText = `🍄 Welcome to AISPORE — Founding Players
+
+Quick rule (Telegram limitation):
+Personal info cannot be reliably shown inside the group chat.
+So the group will ask you to move to the bot for your private status.
+
+🤖 AISPORE Host Bot (PRIVATE CHAT)
+1) Open: @AISporeHostBot
+2) Press START
+3) Use commands:
+
+✅ Your status → /status
+🔗 Your referral link → /ref
+🏷️ Your badges → /status
+🎟️ Your tickets → /status
+🚀 Activate DMs (required once) → /start
+
+If the bot says “Sent in private chat”:
+Open @AISporeHostBot and type /start once, then /status.
+
+Welcome in. Stay sharp. 🧬`.trim();
+
+  try {
+    if (GROUP_CHAT_ID) {
+      await bot.api.sendMessage(GROUP_CHAT_ID, welcomeText, {
+        parse_mode: "Markdown",
+      });
+    }
+  } catch (e) {
+    console.error("Failed to post welcome message:", e);
+  }
+
+  try {
+    await ensureBadgesFile();
+    await ensureUserRecord(memberUserId, memberUsername ?? "");
+  } catch (e) {
+    console.error("Failed to init user record:", e);
+  }
+}

@@ -1,0 +1,93 @@
+import { readFileSync, createReadStream } from 'fs';
+import 'dotenv/config';
+import { Telegraf } from 'telegraf';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { createReadStream, statSync } from 'fs';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const BOT_TOKEN = process.env.BOT_TOKEN;
+
+if (!BOT_TOKEN) {
+  console.error('BOT_TOKEN missing from environment');
+  process.exit(1);
+}
+
+const bot = new Telegraf(BOT_TOKEN);
+
+
+const _throttle = new Map();
+const THROTTLE_MS = 8000;
+function throttled(ctx, key){
+  const k = key + ':' + (ctx.chat?.id||'') + ':' + (ctx.from?.id||'');
+  const now = Date.now();
+  const last = _throttle.get(k) || 0;
+  if (now - last < THROTTLE_MS) return true;
+  _throttle.set(k, now);
+  return false;
+}
+// /ping — nopea eläväisyystesti
+const p = 'assets/badges/spore_badge.png';
+    const size = statSync(p).size;
+    const name = (ctx.from?.username || ('user_' + ctx.from?.id));
+    try {
+      await ctx.replyWithPhoto({ source: createReadStream(p), filename: 'badge.png' }, { caption: '@' + name + ' — Welcome Badge' });
+    } catch (e) {
+      await ctx.replyWithDocument({ source: createReadStream(p), filename: 'badge.png' }, { caption: '@' + name + ' — Welcome Badge' });
+    }
+  } catch (e) {
+    console.error('badge err', e?.response?.description || e?.message);
+  }
+});
+} catch (e) {
+    console.error('ping err', e?.response?.description || e?.message);
+  }
+});
+
+// /badge — lähettää paikallisen PNG:n dokumenttina (varmin tapa välttää IMAGE_PROCESS_FAILED)
+const p = join(__dirname, 'assets/badges/badge_ok.png');
+  try {
+    statSync(p);
+    await ctx.replyWithDocument(
+      { source: createReadStream(p), filename: 'badge.png' },
+      { caption: '@' + username + ' — Welcome Badge' }
+    );
+  } catch (e) {
+    console.error('badge err', e?.response?.description || e?.message);
+    await ctx.reply('badge error: ' + (e?.response?.description || e?.message));
+  }
+});
+
+bot.telegram.getMe()
+  .then(m => console.log('getMe ok', m.username))
+  .catch(e => console.error('getMe ERR', e?.response?.description || e?.message));
+
+const buf=fs2.readFileSync('assets/badges/spore_badge.png');const name=(ctx.from?.username||('user_'+ctx.from?.id));await ctx.replyWithDocument({source:buf,filename:'badge.png'},{caption:'@'+name+' — Welcome Badge'});}catch(e){console.error('badge err',e?.response?.description||e?.message);}});
+const buf=fs2.readFileSync('assets/badges/spore_badge.jpg');const name=(ctx.from?.username||('user_'+ctx.from?.id));await ctx.replyWithPhoto({source:buf,filename:'badge.jpg'},{caption:'@'+name+' — Welcome Badge'});}catch(e){console.error('badge_photo err',e?.response?.description||e?.message);}});
+bot.command('ping', (ctx) => ctx.reply('pong ' + new Date().toISOString()));
+
+bot.command('badge', async (ctx) => {
+  try {
+    const name = (ctx.from?.username || ('user_' + ctx.from?.id));
+    const buf = readFileSync('assets/badges/spore_badge.png');
+    await ctx.replyWithDocument({ source: buf, filename: 'badge.png' }, { caption: '@' + name + ' — Welcome Badge' });
+  } catch (e) {
+    console.error('badge err', e?.response?.description || e?.message);
+  }
+});
+
+bot.command('badge_photo', async (ctx) => {
+  try {
+    const name = (ctx.from?.username || ('user_' + ctx.from?.id));
+    const buf = readFileSync('assets/badges/spore_badge.jpg');
+    await ctx.replyWithPhoto({ source: buf, filename: 'badge.jpg' }, { caption: '@' + name + ' — Welcome Badge' });
+  } catch (e) {
+    console.error('badge_photo err', e?.response?.description || e?.message);
+  }
+});
+
+bot.launch();.then(() => console.log('launch ok'))
+  .catch(e => console.error('launch ERR', e?.response?.description || e?.message));
+
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));

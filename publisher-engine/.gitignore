@@ -1,0 +1,24 @@
+# secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# databases / runtime
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+logs/
+tmp*
+/tmp*
+/pids/
+
+# deps/build
+node_modules/
+dist/
+build/
+
+# misc
+.DS_Store

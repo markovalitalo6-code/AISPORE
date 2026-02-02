@@ -1,0 +1,82 @@
+
+import fs from "fs";
+import path from "path";
+import { audit } from "./audit";
+import { topTickets } from "./tickets";
+
+export type Winner = { tgId: number; username?: string; weight: number; prize: string };
+
+function pickWeighted(items: {tgId:number; username?:string; weight:number}[], count: number){
+  const picked: Winner[] = [];
+  const pool = items.slice();
+  for (let i=0; i<count && pool.length; i++){
+    const sum = pool.reduce((a,b)=>a + Math.max(0,b.weight), 0);
+    if (sum <= 0) break;
+    let r = Math.random() * sum;
+    let idx = 0;
+    for (; idx<pool.length; idx++){
+      r -= Math.max(0, pool[idx].weight);
+      if (r <= 0) break;
+    }
+    const w = pool.splice(Math.min(idx, pool.length-1), 1)[0];
+    picked.push({ tgId: w.tgId, username: w.username, weight: w.weight, prize: "" });
+  }
+  return picked;
+}
+
+function outFile(eventId: number){
+  const outDir = path.resolve(process.cwd(), "exports");
+  if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+  return path.join(outDir, `winners_event_${eventId}.json`);
+}
+
+export function runChestDraw(eventId: number){
+  const top = topTickets(200);
+  const candidates = top.map(x => ({ tgId: x.tgId, username: x.username, weight: Math.max(1, Math.floor(x.score)) }));
+  const winners = pickWeighted(candidates, 3);
+
+  const prizes = ["ROLE: Sporescout", "STATUS: Founding Aura", "TICKET: Bonus Entry"];
+  winners.forEach((w,i)=> w.prize = prizes[i] || "STATUS");
+
+  fs.writeFileSync(outFile(eventId), JSON.stringify({ eventId, winners, at: Date.now() }, null, 2), "utf8");
+  audit(`CHEST event=${eventId} winners=${winners.map(w=>w.tgId).join(",")}`);
+  return winners;
+}
+
+
+let __last:any = null;
+
+// eventId: juokseva numero prosessin muistissa (testmode)
+let __eid = 0;
+
+export function openChestEvent(opts?: { mc?: number }){
+  __eid += 1;
+
+  // Minimalistinen testmode: 3 “palkintoa” (ei token-siirtoja vielä)
+  // Voittajat: haetaan topTickets jos saatavilla, muuten tyhjä lista.
+  let winners: Winner[] = [];
+  try{
+    // dynaminen require ettei tarvitse muuttaa olemassaolevaa koodia
+    const t = require("./tickets");
+    const top = (t.topTickets ? t.topTickets(10) : []) || [];
+    const pick = top.slice(0,3);
+    const prizes = ["🎁 Airdrop Slot (TEST)", "🏷️ Role Unlock (TEST)", "🪙 Token Drop (TEST)"];
+
+    winners = pick.map((x:any, i:number) => ({
+      tgId: Number(x.tgId || 0),
+      username: x.username ? String(x.username) : undefined,
+      prize: prizes[i] || "🎁 Reward (TEST)"
+    }));
+  }catch(e){
+    winners = [];
+  }
+
+  const res = { eventId: __eid, mc: opts?.mc ?? 0, winners, at: new Date().toISOString() };
+  __last = res;
+  return res;
+}
+
+export function getLatestWinners(limit:number=3){
+  if(!__last) return [];
+  return [__last].slice(0, limit);
+}

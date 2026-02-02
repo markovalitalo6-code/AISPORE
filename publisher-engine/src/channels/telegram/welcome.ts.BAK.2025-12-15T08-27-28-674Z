@@ -1,0 +1,92 @@
+import { Bot } from "grammy";
+import { ensureUserRecord } from "./referral";
+import { ensureBadgesFile } from "./referral.utils";
+
+const GROUP_CHAT_ID = process.env.TELEGRAM_CHAT_ID ?? "";
+
+export async function handleNewGroupMember(
+  bot: Bot,
+  memberUserId: number,
+  memberUsername?: string,
+  memberFirstName?: string
+) {
+  const welcomeText = `
+🍄 WELCOME TO AISPORE | FOUNDING PLAYERS
+
+You’re early. This is the core group before launch.
+
+⚠️ IMPORTANT — PLEASE READ (1 minute)
+
+You will receive a message from **@AISporeHostBot**.
+👉 This is NOT spam.
+👉 This is REQUIRED to activate your participation.
+
+Telegram does NOT allow bots to message you first.
+
+---
+
+✅ WHAT YOU MUST DO (VERY SIMPLE)
+
+1️⃣ Open **@AISporeHostBot**
+2️⃣ Tap **Start**
+
+That’s it. Nothing else.
+
+---
+
+🎖️ WHAT YOU GET AFTER ACTIVATION
+
+• Your personal referral link  
+• Your badge (🥉 Bronze → 🥈 Silver → 🥇 Gold → 💎 Diamond)  
+• Access to future rewards & advantages  
+• Check your status anytime with **/me**
+
+⚠️ If you do NOT open the bot:
+You remain an observer and are NOT included in rewards.
+
+---
+
+🧠 COMMON ISSUE
+
+If you didn’t get a DM yet:
+👉 Open **@AISporeHostBot** and tap **Start**
+
+This is a Telegram limitation.
+
+---
+
+🧭 WHAT AISPORE IS
+
+✔️ Community-first  
+✔️ Long-term focused  
+✔️ Early participation matters  
+
+❌ Not a pump group  
+❌ Not financial advice  
+
+---
+
+🚀 TL;DR
+
+• Joined the group ✅  
+• Opened @AISporeHostBot once ✅  
+• You’re fully activated 🍄
+`.trim();
+
+  try {
+    if (GROUP_CHAT_ID) {
+      await bot.api.sendMessage(GROUP_CHAT_ID, welcomeText, {
+        parse_mode: "Markdown",
+      });
+    }
+  } catch (e) {
+    console.error("Failed to post welcome message:", e);
+  }
+
+  try {
+    await ensureBadgesFile();
+    await ensureUserRecord(memberUserId, memberUsername ?? "");
+  } catch (e) {
+    console.error("Failed to init user record:", e);
+  }
+}

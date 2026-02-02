@@ -1,0 +1,97 @@
+import { Bot } from "grammy";
+import { ensureUserRecord } from "./referral";
+import { ensureBadgesFile } from "./referral.utils";
+
+const GROUP_CHAT_ID = process.env.TELEGRAM_CHAT_ID ?? "";
+
+export async function handleNewGroupMember(
+  bot: Bot,
+  memberUserId: number,
+  memberUsername?: string,
+  memberFirstName?: string
+) {
+  const welcomeText = `🍄 AISPORE — Founding Players
+
+⚠️ READ THIS CAREFULLY (Telegram limitation)
+
+Telegram does NOT allow showing personal data
+(referrals, tickets, badges, status)
+reliably inside a GROUP chat.
+
+👉 Because of this, AISPORE uses a PRIVATE Host Bot
+for ALL personal information.
+
+────────────────────
+🤖 AISPORE HOST BOT (PRIVATE CHAT)
+────────────────────
+
+1️⃣ Open the bot:
+👉 @AISporeHostBot
+
+2️⃣ Press START (required once)
+Telegram blocks bots until you do this.
+
+3️⃣ Use these commands INSIDE THE BOT CHAT
+(not in this group):
+
+✅ /status — your full status card
+🔗 /ref — your personal referral link
+🏆 /leaders — referral leaderboard
+
+❗ Important:
+If you see:
+“Sent in private chat”
+
+It means Telegram blocked the bot.
+Fix it like this:
+→ Open @AISporeHostBot
+→ Type /start once
+→ Then type /status
+
+That’s it.
+
+Welcome in. Stay sharp. 🧬`.trim();
+
+  try {
+    if (GROUP_CHAT_ID) {
+      await bot.api.sendMessage(GROUP_CHAT_ID, welcomeText, {
+        parse_mode: "Markdown",
+      });
+    }
+  } catch (e) {
+    console.error("Failed to post welcome message:", e);
+  }
+
+  try {
+    await ensureBadgesFile();
+    await ensureUserRecord(memberUserId, memberUsername ?? "");
+  } catch (e) {
+    console.error("Failed to init user record:", e);
+  }
+
+  try {
+    if (process.env.AUTO_DM_STATUS_ON_JOIN === "1") {
+      const dmText = `🤖 AISPORE HOST BOT
+
+This bot handles ALL your personal AISPORE data.
+
+Available commands:
+✅ /status — your status card
+🔗 /ref — your referral link
+🏆 /leaders — leaderboard
+
+Important:
+• Commands work ONLY here (private chat)
+• Group chat cannot show personal data
+• Hold-based badges activate after token launch + snapshot
+
+You are now connected. 🧬
+
+Tip: type /status to begin.`;
+
+      await bot.api.sendMessage(memberUserId, dmText);
+    }
+  } catch (e) {
+    console.error("Failed to DM user:", e);
+  }
+}

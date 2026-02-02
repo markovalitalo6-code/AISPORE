@@ -1,0 +1,68 @@
+import { Telegraf } from 'telegraf'
+import dotenv from 'dotenv'
+dotenv.config()
+
+const TOKEN = process.env.BOT_TOKEN || ''
+const CHAT_ID = process.env.CHAT_ID || ''
+console.log('[BOOT_TOKEN_SUFFIX]', (TOKEN||'').slice(-8))
+
+if(!TOKEN){ console.error('BOT_TOKEN puuttuu .env:stä'); process.exit(1) }
+if(!CHAT_ID){ console.warn('CHAT_ID puuttuu .env:stä — /id auttaa ryhmässä') }
+
+const bot = new Telegraf(TOKEN, {
+  handlerTimeout: 30_000
+})
+
+bot.start(async (ctx) => {
+  try {
+    await ctx.reply('AI Spore Host here! ✅ Käytettävissä. /ping, /id')
+  } catch(e){ console.error('start err', e?.message) }
+})
+
+bot.command('ping', async (ctx) => {
+  try { await ctx.reply('pong ✅') } catch(e){ console.error('ping err', e?.message) }
+})
+
+bot.command('id', async (ctx) => {
+  try {
+    const cid = ctx.chat?.id
+    await ctx.reply(`chat id: ${cid}`)
+  } catch(e){ console.error('id err', e?.message) }
+})
+
+// Yksinkertainen lähetysapu
+async function post(text){
+  if(!CHAT_ID){ console.error('CHAT_ID puuttuu — ei voida postata'); return }
+  try { await bot.telegram.sendMessage(CHAT_ID, text) } catch(e){ console.error('post err', e?.message) }
+}
+
+// Tunnin välein status
+function startHourlyStatus(){
+  const tick = async ()=> { await post('📢 Status: bot toimii (tunti-keepalive)') }
+  const ms = 60*60*1000
+  const delay = 10*1000
+  setTimeout(async ()=>{ await tick(); setInterval(tick, ms) }, delay)
+}
+
+// Webhook pois varmuudeksi (poistaa 409-syyt)
+async function clearWebhook(){
+  try { await fetch(`https://api.telegram.org/bot${TOKEN}/deleteWebhook?drop_pending_updates=true`) } catch{}
+}
+
+async function main(){
+  await clearWebhook()
+  const me = await bot.telegram.getMe()
+  console.log('[BOT]', me.username, me.id)
+  await bot.launch()
+  console.log('AI Spore bot online')
+
+  startHourlyStatus()
+}
+
+process.once('SIGINT', () => { try{ bot.stop('SIGINT') }catch{} })
+process.once('SIGTERM', () => { try{ bot.stop('SIGTERM') }catch{} })
+
+main().catch(err => {
+  console.error('FATAL', err?.response?.description || err?.message || err)
+  process.exit(1)
+})
