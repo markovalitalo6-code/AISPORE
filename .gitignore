@@ -64,3 +64,6 @@ publisher-engine/src/channels/telegram/handler.ts.BAK*
 publisher-engine/src/channels/telegram/handler.ts.bak*
 publisher-engine/src/channels/telegram/handler.ts.BROKEN*
 publisher-engine/src/channels/telegram/handler.ts.PATCHREF*
+
+# snapshots / exports
+snapshots/
