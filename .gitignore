@@ -1,69 +1,45 @@
-# secrets
+# --- Secrets ---
 .env
 .env.*
-*.env
-**/.env
-**/.env.*
+*.key
+*.pem
 
-# databases / state
-*.sqlite
-*.sqlite-shm
-*.sqlite-wal
-*.db
-*.db-shm
-*.db-wal
-
-# logs / runtime
-logs/
-**/logs/
-*.log
-*.pid
-pids/
-.tmp/
-tmp/
+# --- OS / Editor ---
 .DS_Store
+.idea/
+.vscode/
+*.swp
 
-# deps / build
-node_modules/
-dist/
-build/
-.cache/
-.pnpm-store/
+# --- Dependencies / build output ---
+**/node_modules/
+**/.next/
+**/dist/
+**/build/
+**/.turbo/
+**/.cache/
 
-# exports / generated media (isoja)
-publisher-engine/data/tg_images/
-publisher-engine/src/assets/tg_images/
+# --- Local AI workspace/memory (do not version) ---
+llmao/
+_export_ai/
 
-# secrets
-.env
-**/.env
-.env.*
-**/.env.*
+# --- Local runtime/public artifacts (generated) ---
+web/ai-spore-site/public/events.jsonl
+web/ai-spore-site/public/canon.json
 
-# sqlite/db
-*.sqlite
-*.sqlite-*
-**/*.sqlite
-**/*.sqlite-*
+# --- Project runtime data (do not version) ---
+**/data/
+**/exports/
+**/tg_images/
+**/*.log
+logs/
 
-# backups / temp
-*.bak
-*.backup
-*.tmp
-
-# publisher-engine runtime data (ei repo)
-publisher-engine/data/referral_*.json
-publisher-engine/data/pending_referrals.json
-publisher-engine/data/referral_consumed.json*
-publisher-engine/data/referral_pending.json*
-publisher-engine/data/*bak_*
-publisher-engine/.LAST_GOOD_HANDLER_BACKUP
-
-# keep code, ignore endless handler backups
-publisher-engine/src/channels/telegram/handler.ts.BAK*
-publisher-engine/src/channels/telegram/handler.ts.bak*
-publisher-engine/src/channels/telegram/handler.ts.BROKEN*
-publisher-engine/src/channels/telegram/handler.ts.PATCHREF*
-
-# snapshots / exports
-snapshots/
+# --- Backups / temp / dumps ---
+**/*.bak
+**/*.bak_*
+**/*.BAK
+**/*.BAK_*
+**/*.backup_*
+**/*.BROKEN*
+**/*.PATCH*
+**/*.LAST_GOOD*
+**/_hotfix_backups/
