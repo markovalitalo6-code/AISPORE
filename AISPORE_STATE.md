@@ -106,3 +106,53 @@ cd "$HOME/hub/AI-WorkSpace/01_projects/ai-spore/web/ai-spore-site" && PORT=3000 
 - Next.js rewrite set (next.config.ts)
 - /api-test UI works with buttons
 
+## SECURITY & TRUST MODEL (DRAFT)
+
+- **Trust boundary:** Web is source of truth; Telegram bot only announces/routes. No payouts triggered by TG commands directly.
+- **Auth model (v1):**
+  - Public: read-only endpoints (health, calc, raffle simulate) ok without auth
+  - Protected: any “state change” endpoints (reward lock, write ops) require admin key / signed request
+- **Admin operations:**
+  - Only admin can execute weekly lock / reward lock write
+  - All admin actions must be logged (who, what, when, input hash)
+- **Sybil resistance (v1 pragmatic):**
+  - Tickets are wallet-based (not account-based)
+  - Caps and diminishing returns already applied via ticket formula + weekly cap
+  - Referral weight capped and “active ref” rules enforced (anti-ring)
+- **Anti-bot / spam:**
+  - Rate limits on endpoints that can be spammed
+  - No ticket issuance from raw chat messages (only from defined actions / verified events)
+- **Randomness / verifiability (v1):**
+  - Weekly seed must be public and recorded (week + seed + entries hash)
+  - Winner selection must be reproducible from (seed + entries)
+  - Reward lock output stored as immutable record (append-only)
+- **Idempotency / replay protection:**
+  - Weekly lock is idempotent per `week` (same week cannot be locked twice)
+  - Each reward record has unique id; reads are by id
+- **Data integrity:**
+  - Store append-only “events” log for critical transitions
+  - Never overwrite past weeks; only append new week records
+- **Kill switch:**
+  - Ability to pause reward locking / payouts if anomalies detected
+- **No custody promises (v1):**
+  - Off-chain lock = database lock only; on-chain enforcement later if needed (explicitly stated)
+
+## REWARD LIFECYCLE (v1 — OFF-CHAIN LOCK, READ-ONLY VERIFIABLE)
+
+- **Inputs (public):** week, seed, entries[]
+- **Step 1 — Ticket calc (public):** `/calc/tickets` produces `(eligible, tickets, breakdown)`
+- **Step 2 — Raffle draw (public, reproducible):** `/raffle/run` selects winner from `(seed + entries)`
+- **Step 3 — Lock record (admin-only write):** `/reward/lock` stores immutable record:
+  - `{ week, seed, entriesHash, winnerUserId, totalTickets, createdAt, locked:true }`
+- **Step 4 — Readback (public read):**
+  - `GET /reward/:id` returns the locked record by id
+  - `GET /reward/by-week/:week` returns the record for a week (single source)
+- **Idempotency rules:**
+  - One lock per `week` (second attempt must reject or return the same record)
+  - Locked records are **append-only** (never overwritten)
+- **Verifiability rules:**
+  - Anyone can recompute winner from `(seed + entries)` and compare to stored `winnerUserId`
+  - `entriesHash` makes the locked record tamper-evident
+- **What v1 does NOT do:**
+  - No on-chain escrow/VRF yet (explicitly off-chain lock + public verifiability only)
+
