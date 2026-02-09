@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) {
@@ -12,8 +12,7 @@ const prBody = process.env.PR_BODY || "";
 const repo = process.env.GITHUB_REPOSITORY || "";
 const ref = process.env.GITHUB_REF || "";
 
-const genAI = new GoogleGenerativeAI(apiKey);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+const ai = new GoogleGenAI({ apiKey });
 
 const prompt = `
 You are a senior security+backend+tokenomics reviewer for the AISPORE repo.
@@ -41,6 +40,15 @@ ${diff.slice(0, 180000)}
 \`\`\`
 `;
 
-const result = await model.generateContent(prompt);
-const text = result?.response?.text?.() ?? "No response from Gemini.";
+const resp = await ai.models.generateContent({
+  model: "gemini-1.5-flash",
+  contents: prompt,
+});
+
+const text =
+  resp?.text ??
+  resp?.candidates?.[0]?.content?.parts?.map((p) => p?.text || "").join("") ??
+  "No response from Gemini.";
+
 console.log(text);
+
