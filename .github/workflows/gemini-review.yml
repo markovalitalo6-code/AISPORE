@@ -3,11 +3,12 @@ name: Gemini PR Review
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 permissions:
   contents: read
   pull-requests: write
+  issues: write
 
 jobs:
   gemini_review:
@@ -65,4 +66,3 @@ jobs:
               issue_number: context.payload.pull_request.number,
               body: "## 🤖 Gemini Review\n\n" + body
             });
-
