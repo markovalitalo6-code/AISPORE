@@ -13,7 +13,7 @@ const repo = process.env.GITHUB_REPOSITORY || "";
 const ref = process.env.GITHUB_REF || "";
 
 const genAI = new GoogleGenerativeAI(apiKey);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 const prompt = `
 You are a senior security+backend+tokenomics reviewer for the AISPORE repo.
