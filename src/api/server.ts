@@ -9,11 +9,13 @@ app.use(express.json());
 // AUTH
 app.use("/auth", authRouter);
 
-// READ-ONLY ROUTES (health, calc, raffle)
+// READ-ONLY ROUTES (health, whoami, calc, raffle)
 app.use("/", readonlyRouter);
-app.use("/reward", rewardRouter);
 
-const port = Number(process.env.PORT ?? 3000);
+// REWARD ROUTES (lock + reads)
+app.use("/", rewardRouter);
+
+const port = Number(process.env.PORT ?? 3100);
 app.listen(port, () => {
   console.log(`AISPORE API listening on http://localhost:${port}`);
 });

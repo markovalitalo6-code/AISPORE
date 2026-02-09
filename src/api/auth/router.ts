@@ -17,7 +17,8 @@ authRouter.post("/identify", (req: Request, res: Response) => {
   }
 
   const user = store.identify(walletPublicKey);
-  return res.json({ userId: user.userId });
+  return res.json({ userId: user.id });
+
 });
 
 /**

@@ -1,54 +1,92 @@
 import crypto from "crypto";
 
-export interface User {
-  userId: string;
+/** -------- TYPES -------- */
+
+export type UserRecord = {
+  id: string;
   walletPublicKey: string;
-  tickets: number | null;
-  raffleEntryId: string | null;
+  createdAt: number;
+};
+
+export type RewardRecord = {
+  id: string;
+  week: string;
+  seed: string;
+  entriesHash: string;
+  winnerUserId: string;
+  totalTickets: number;
+  rewardType: "CHEST_WIN";
+  rewardTier: "BRONZE" | "SILVER" | "GOLD" | "DIAMOND";
+  createdAt: number;
+  locked: boolean;
+};
+
+function genIdHex(bytes = 12) {
+  return crypto.randomBytes(bytes).toString("hex");
 }
 
-type UserId = string;
-type Wallet = string;
+/** -------- STORE -------- */
 
 class InMemoryStore {
-  private usersById = new Map<UserId, User>();
-  private userIdByWallet = new Map<Wallet, UserId>();
+  // USERS
+  private usersById = new Map<string, UserRecord>();
+  private usersByWallet = new Map<string, UserRecord>();
 
-  makeUserId(walletPublicKey: string): string {
-    return crypto
-      .createHash("sha256")
-      .update(walletPublicKey)
-      .digest("hex");
+  // REWARDS (one lock per week)
+  private rewardsByWeek = new Map<string, RewardRecord>();
+  private rewardsById = new Map<string, RewardRecord>();
+
+  /** AUTH: identify wallet -> returns existing or creates a new user */
+  identify(walletPublicKey: string): UserRecord {
+    const key = String(walletPublicKey || "").trim();
+    if (!key) {
+      throw new Error("walletPublicKey required");
+    }
+
+    const existing = this.usersByWallet.get(key);
+    if (existing) return existing;
+
+    const user: UserRecord = {
+      id: genIdHex(12),
+      walletPublicKey: key,
+      createdAt: Date.now(),
+    };
+
+    this.usersById.set(user.id, user);
+    this.usersByWallet.set(user.walletPublicKey, user);
+    return user;
   }
 
-  getUserById(userId: string): User | null {
+  getUserById(userId: string): UserRecord | null {
     return this.usersById.get(userId) ?? null;
   }
 
-  getUserByWallet(walletPublicKey: string): User | null {
-    const id = this.userIdByWallet.get(walletPublicKey);
-    return id ? this.usersById.get(id) ?? null : null;
+  /** REWARDS */
+  rewardGetByWeek(week: string): RewardRecord | null {
+    return this.rewardsByWeek.get(week) ?? null;
   }
 
-  identify(walletPublicKey: string): User {
-    const existing = this.getUserByWallet(walletPublicKey);
+  rewardGetById(id: string): RewardRecord | null {
+    return this.rewardsById.get(id) ?? null;
+  }
+
+  rewardInsert(input: Omit<RewardRecord, "id" | "createdAt">): RewardRecord {
+    // idempotency: one record per week
+    const existing = this.rewardsByWeek.get(input.week);
     if (existing) return existing;
 
-    const userId = this.makeUserId(walletPublicKey);
-
-    const user: User = {
-      userId,
-      walletPublicKey,
-      tickets: null,
-      raffleEntryId: null,
+    const record: RewardRecord = {
+      ...input,
+      id: genIdHex(12),
+      createdAt: Date.now(),
     };
 
-    this.usersById.set(userId, user);
-    this.userIdByWallet.set(walletPublicKey, userId);
-
-    return user;
+    this.rewardsByWeek.set(record.week, record);
+    this.rewardsById.set(record.id, record);
+    return record;
   }
 }
 
 export const store = new InMemoryStore();
+export type { InMemoryStore };
 
