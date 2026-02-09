@@ -28,6 +28,18 @@ jobs:
           npm init -y >/dev/null 2>&1 || true
           npm i @google/genai >/dev/null 2>&1
 
+      - name: Guard: block unsupported models
+        run: |
+          echo "Checking scripts/gemini_review.mjs for unsupported model ids..."
+          if grep -E "gemini-1\.5-(flash|pro)" -n scripts/gemini_review.mjs; then
+            echo "ERROR: Unsupported model (gemini-1.5-*) detected. Use gemini-2.0-flash."
+            exit 1
+          fi
+          if grep -E "@google/generative-ai" -n scripts/gemini_review.mjs; then
+            echo "ERROR: Old client (@google/generative-ai) detected. Use @google/genai."
+            exit 1
+          fi
+
       - name: Build diff (base..head)
         run: |
           BASE="${{ github.event.pull_request.base.sha }}"

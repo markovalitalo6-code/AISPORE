@@ -1,0 +1,27 @@
+{
+  "name": "ai-spore",
+  "version": "1.0.0",
+  "description": "1. Get public inputs:    - week    - seed    - entries (or entriesHash) 2. Re-run raffle with the same seed + entries. 3. Compare:    - winnerUserId    - totalTickets 4. Fetch locked record:    - GET /reward/:id or /reward/by-week/:week 5. Result must match exactly. ## How AISPORE v1 works (plain English)",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/markovalitalo6-code/AISPORE.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/markovalitalo6-code/AISPORE/issues"
+  },
+  "homepage": "https://github.com/markovalitalo6-code/AISPORE#readme",
+  "devDependencies": {
+    "@google/genai": "^1.40.0"
+  }
+}
