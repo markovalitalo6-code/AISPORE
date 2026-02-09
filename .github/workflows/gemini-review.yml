@@ -3,11 +3,12 @@ name: Gemini PR Review
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 permissions:
   contents: read
   pull-requests: write
+  issues: write
 
 jobs:
   gemini_review:
@@ -27,6 +28,22 @@ jobs:
         run: |
           npm init -y >/dev/null 2>&1 || true
           npm i @google/genai >/dev/null 2>&1
+
+      - name: Guard: lock model + client
+        run: |
+          echo "Guarding gemini_review.mjs..."
+          if grep -E "gemini-1\.5-(flash|pro)" -n scripts/gemini_review.mjs; then
+            echo "ERROR: gemini-1.5-* is not allowed. Use gemini-2.0-flash."
+            exit 1
+          fi
+          if ! grep -E "gemini-2\.0-flash" -n scripts/gemini_review.mjs; then
+            echo "ERROR: gemini-2.0-flash must be present."
+            exit 1
+          fi
+          if grep -E "@google/generative-ai" -n scripts/gemini_review.mjs; then
+            echo "ERROR: old client @google/generative-ai is not allowed. Use @google/genai."
+            exit 1
+          fi
 
       - name: Build diff (base..head)
         run: |
