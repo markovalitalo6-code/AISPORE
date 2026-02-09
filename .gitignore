@@ -54,3 +54,10 @@ publisher-engine/exports/
 publisher-engine/data/
 publisher-engine/src/assets/
 snapshots/
+
+# local/uncommitted publisher-engine scripts (do not commit)
+publisher-engine/scripts/appendEvent.ts
+publisher-engine/scripts/autopost_once.ts
+publisher-engine/scripts/autoposter_daemon.ts
+publisher-engine/scripts/rebuildCanon.ts
+publisher-engine/src/scheduler/tgAutopostDaemon.ts
