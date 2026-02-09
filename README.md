@@ -30,3 +30,5 @@ What v1 does NOT do:
 
 
 # gemini-review-test
+
+# gemini-review-retrigger
