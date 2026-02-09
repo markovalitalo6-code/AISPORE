@@ -164,3 +164,5 @@ cd "$HOME/hub/AI-WorkSpace/01_projects/ai-spore/web/ai-spore-site" && PORT=3000 
 - Locked decisions: `memory/decisions.md`
 - Project overview: `memory/project.md`
 
+
+- Telegram integration plan: `memory/integrations_telegram.md`
