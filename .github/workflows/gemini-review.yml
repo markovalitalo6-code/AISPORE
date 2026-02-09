@@ -3,15 +3,16 @@ name: Gemini PR Review
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
 
 permissions:
   contents: read
   pull-requests: write
 
+
 jobs:
   gemini_review:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
     steps:
       - name: Checkout
         uses: actions/checkout@v4
