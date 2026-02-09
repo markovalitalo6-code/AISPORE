@@ -1,36 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
-type Health = { ok: boolean };
-type TicketOut = {
-  eligible: boolean;
-  tickets: number;
-  breakdown: { holdWeight: number; activityWeight: number; refWeight: number };
-};
-type RaffleResult = { winnerUserId: string | null; totalTickets: number };
-
-type Entry = { userId: string; tickets: number };
+type AnyJson = any;
 
 export default function ApiTestPage() {
-  const [health, setHealth] = useState<Health | null>(null);
-  const [tickets, setTickets] = useState<TicketOut | null>(null);
-  const [raffle, setRaffle] = useState<RaffleResult | null>(null);
-  const [reveal, setReveal] = useState<{ userId: string; result: "WIN" | "LOSE" } | null>(null);
+  const [health, setHealth] = useState<AnyJson>(null);
+  const [tickets, setTickets] = useState<AnyJson>(null);
+  const [locked, setLocked] = useState<AnyJson>(null);
+  const [byWeek, setByWeek] = useState<AnyJson>(null);
+  const [raffle, setRaffle] = useState<AnyJson>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // demo-data
-  const seed = "WEEK_1_SEED";
-  const entries: Entry[] = [
-    { userId: "A", tickets: 22 },
-    { userId: "B", tickets: 32 },
-  ];
+  // Admin key (dev only). This is fine for local dev; later move to env/secure flow.
+  const [adminKey, setAdminKey] = useState<string>("dev_admin");
+
+  // Use Next rewrite proxy: /api/* -> http://localhost:3100/*
+  const API = useMemo(() => "/api", []);
+
+  const btn =
+    "inline-flex items-center justify-center rounded-xl px-4 py-2 font-semibold shadow-sm border border-black/10 bg-black text-white hover:opacity-90 active:opacity-80 transition";
+  const btn2 =
+    "inline-flex items-center justify-center rounded-xl px-4 py-2 font-semibold shadow-sm border border-black/10 bg-white text-black hover:bg-black/5 active:bg-black/10 transition";
+  const box =
+    "rounded-xl border border-black/10 bg-white p-3 shadow-sm overflow-auto";
 
   async function pingHealth() {
     try {
       setError(null);
-      const res = await fetch("/api/health");
-      const json = (await res.json()) as Health;
+      const res = await fetch(`${API}/health`);
+      const json = await res.json();
       setHealth(json);
     } catch (e: any) {
       setError(e?.message ?? "Health failed");
@@ -40,7 +39,7 @@ export default function ApiTestPage() {
   async function calcTickets() {
     try {
       setError(null);
-      const res = await fetch("/api/calc/tickets", {
+      const res = await fetch(`${API}/calc/tickets`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -52,181 +51,167 @@ export default function ApiTestPage() {
           bronzeMinTokens: 1000,
         }),
       });
-      const json = (await res.json()) as TicketOut;
+      const json = await res.json();
       setTickets(json);
     } catch (e: any) {
       setError(e?.message ?? "Calc failed");
     }
   }
 
+  async function lockWeekUI() {
+    try {
+      setError(null);
+      const payload = {
+        week: "WEEK_UI",
+        seed: "WEEK_UI_SEED",
+        entries: [
+          { userId: "A", tickets: 1 },
+          { userId: "B", tickets: 2 },
+        ],
+        winnerUserId: "A",
+        totalTickets: 3,
+      };
+
+      const res = await fetch(`${API}/reward/lock`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": adminKey,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const json = await res.json();
+      setLocked(json);
+    } catch (e: any) {
+      setError(e?.message ?? "Lock failed");
+    }
+  }
+
+  async function getByWeekUI() {
+    try {
+      setError(null);
+      const res = await fetch(`${API}/reward/by-week/WEEK_UI`);
+      const json = await res.json();
+      setByWeek(json);
+    } catch (e: any) {
+      setError(e?.message ?? "By-week failed");
+    }
+  }
+
   async function runRaffle() {
     try {
       setError(null);
-      setReveal(null);
-      const res = await fetch("/api/raffle/run", {
+      const res = await fetch(`${API}/raffle/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seed, entries }),
+        body: JSON.stringify({
+          seed: "WEEK_UI_SEED",
+          entries: [
+            { userId: "A", tickets: 22 },
+            { userId: "B", tickets: 32 },
+          ],
+        }),
       });
-      const json = (await res.json()) as RaffleResult;
+      const json = await res.json();
       setRaffle(json);
     } catch (e: any) {
       setError(e?.message ?? "Raffle failed");
     }
   }
 
-  function openChest(userId: string) {
-    if (!raffle?.winnerUserId) {
-      setError("Run raffle first (no winner yet)");
-      return;
-    }
-    const result: "WIN" | "LOSE" = userId === raffle.winnerUserId ? "WIN" : "LOSE";
-    setReveal({ userId, result });
-  }
-
   return (
-    <main style={{ padding: 24, fontFamily: "monospace" }}>
-      <h1 style={{ marginBottom: 12 }}>API Test</h1>
+    <main style={{ padding: 24, fontFamily: "system-ui, -apple-system, sans-serif" }}>
+      <div style={{ maxWidth: 980, margin: "0 auto" }}>
+        <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>API Test</h1>
+        <p style={{ opacity: 0.8, marginTop: 0 }}>
+          Web → <code>/api/*</code> proxy → API (3100)
+        </p>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center" }}>
-        <span style={{ padding: "4px 10px", border: "1px solid #ddd", borderRadius: 999 }}>
-          /api → localhost:3100
-        </span>
-        <span style={{ padding: "4px 10px", border: "1px solid #ddd", borderRadius: 999 }}>
-          page: /api-test
-        </span>
-      </div>
-
-      {/* 1) Health */}
-      <section style={{ border: "1px solid #eee", borderRadius: 12, padding: 16, marginBottom: 16 }}>
-        <div style={{ fontWeight: 700, marginBottom: 8 }}>1) Health</div>
-        <button
-          onClick={pingHealth}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 10,
-            border: "1px solid #111",
-            background: "#111",
-            color: "white",
-            cursor: "pointer",
-          }}
-        >
-          Ping Health
-        </button>
-        {health && (
-          <pre style={{ marginTop: 12, background: "#f7f7f7", padding: 12, borderRadius: 10 }}>
-            {JSON.stringify(health, null, 2)}
-          </pre>
-        )}
-      </section>
-
-      {/* 2) Calc Tickets */}
-      <section style={{ border: "1px solid #eee", borderRadius: 12, padding: 16, marginBottom: 16 }}>
-        <div style={{ fontWeight: 700, marginBottom: 8 }}>2) Calc Tickets</div>
-        <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 8 }}>
-          payload: 500k avg, games=5, tierMin=1000, base=10
-        </div>
-        <button
-          onClick={calcTickets}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 10,
-            border: "1px solid #111",
-            background: "#111",
-            color: "white",
-            cursor: "pointer",
-          }}
-        >
-          Calc Tickets
-        </button>
-        {tickets && (
-          <pre style={{ marginTop: 12, background: "#f7f7f7", padding: 12, borderRadius: 10 }}>
-            {JSON.stringify(tickets, null, 2)}
-          </pre>
-        )}
-      </section>
-
-      {/* 3) Run Raffle */}
-      <section style={{ border: "1px solid #eee", borderRadius: 12, padding: 16, marginBottom: 16 }}>
-        <div style={{ fontWeight: 700, marginBottom: 8 }}>3) Run Raffle</div>
-        <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 8 }}>
-          seed={seed}, A=22, B=32
-        </div>
-        <button
-          onClick={runRaffle}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 10,
-            border: "1px solid #111",
-            background: "#111",
-            color: "white",
-            cursor: "pointer",
-          }}
-        >
-          Run Raffle
-        </button>
-        {raffle && (
-          <pre style={{ marginTop: 12, background: "#f7f7f7", padding: 12, borderRadius: 10 }}>
-            {JSON.stringify(raffle, null, 2)}
-          </pre>
-        )}
-      </section>
-
-      {/* A) Chest Reveal (UI) */}
-      <section style={{ border: "1px solid #eee", borderRadius: 12, padding: 16 }}>
-        <div style={{ fontWeight: 700, marginBottom: 8 }}>A) Chest Reveal (UI)</div>
-
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-          <button
-            onClick={() => openChest("A")}
-            style={{
-              padding: "10px 14px",
-              borderRadius: 10,
-              border: "1px solid #ddd",
-              background: "white",
-              cursor: "pointer",
-            }}
-          >
-            Open Chest (User A)
-          </button>
-          <button
-            onClick={() => openChest("B")}
-            style={{
-              padding: "10px 14px",
-              borderRadius: 10,
-              border: "1px solid #ddd",
-              background: "white",
-              cursor: "pointer",
-            }}
-          >
-            Open Chest (User B)
-          </button>
-        </div>
-
-        {reveal && (
-          <div
-            style={{
-              padding: 12,
-              borderRadius: 10,
-              border: "1px solid #ddd",
-              background: reveal.result === "WIN" ? "#f0fff4" : "#fff5f5",
-            }}
-          >
-            <div style={{ fontWeight: 700 }}>
-              {reveal.userId} → {reveal.result === "WIN" ? "✅ WIN" : "❌ LOSE"}
-            </div>
-            <div style={{ fontSize: 12, opacity: 0.8, marginTop: 6 }}>
-              (winnerUserId = {raffle?.winnerUserId ?? "null"})
+        <div style={{ display: "grid", gap: 16, gridTemplateColumns: "1fr" }}>
+          <div className={box}>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+              <button className={btn2} onClick={pingHealth}>Ping Health</button>
+              <button className={btn2} onClick={calcTickets}>Calc Tickets</button>
+              <button className={btn2} onClick={runRaffle}>Run Raffle</button>
             </div>
           </div>
-        )}
-      </section>
 
-      {error && (
-        <pre style={{ color: "red", marginTop: 16 }}>
-          ERROR: {error}
-        </pre>
-      )}
+          <div className={box}>
+            <h2 style={{ margin: "0 0 10px 0", fontSize: 16, fontWeight: 800 }}>
+              Admin (dev)
+            </h2>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+              <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <span style={{ fontWeight: 700, opacity: 0.7 }}>x-admin-key</span>
+                <input
+                  value={adminKey}
+                  onChange={(e) => setAdminKey(e.target.value)}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: 12,
+                    border: "1px solid rgba(0,0,0,0.12)",
+                    minWidth: 220,
+                  }}
+                />
+              </label>
+
+              <button className={btn} onClick={lockWeekUI}>Lock WEEK_UI</button>
+              <button className={btn2} onClick={getByWeekUI}>Get by-week WEEK_UI</button>
+            </div>
+          </div>
+
+          {error && (
+            <div className={box} style={{ borderColor: "rgba(255,0,0,0.25)" }}>
+              <div style={{ fontWeight: 800, marginBottom: 6 }}>ERROR</div>
+              <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>{error}</pre>
+            </div>
+          )}
+
+          <div style={{ display: "grid", gap: 16, gridTemplateColumns: "1fr 1fr" }}>
+            <div className={box}>
+              <div style={{ fontWeight: 800, marginBottom: 8 }}>health</div>
+              <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+                {health ? JSON.stringify(health, null, 2) : "(empty)"}
+              </pre>
+            </div>
+
+            <div className={box}>
+              <div style={{ fontWeight: 800, marginBottom: 8 }}>tickets</div>
+              <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+                {tickets ? JSON.stringify(tickets, null, 2) : "(empty)"}
+              </pre>
+            </div>
+
+            <div className={box}>
+              <div style={{ fontWeight: 800, marginBottom: 8 }}>raffle</div>
+              <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+                {raffle ? JSON.stringify(raffle, null, 2) : "(empty)"}
+              </pre>
+            </div>
+
+            <div className={box}>
+              <div style={{ fontWeight: 800, marginBottom: 8 }}>locked</div>
+              <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+                {locked ? JSON.stringify(locked, null, 2) : "(empty)"}
+              </pre>
+            </div>
+
+            <div className={box} style={{ gridColumn: "1 / -1" }}>
+              <div style={{ fontWeight: 800, marginBottom: 8 }}>by-week</div>
+              <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+                {byWeek ? JSON.stringify(byWeek, null, 2) : "(empty)"}
+              </pre>
+            </div>
+          </div>
+        </div>
+
+        <style jsx global>{`
+          body { background: #f6f7f9; }
+          code { background: rgba(0,0,0,0.06); padding: 2px 6px; border-radius: 8px; }
+          button { cursor: pointer; }
+        `}</style>
+      </div>
     </main>
   );
 }

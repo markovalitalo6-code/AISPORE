@@ -43,3 +43,14 @@ logs/
 **/*.PATCH*
 **/*.LAST_GOOD*
 **/_hotfix_backups/
+
+# Backups / dumps
+**/*.bak
+**/*.BAK*
+**/*.BACKUP
+**/*.BROKEN*
+**/*.PATCH*
+publisher-engine/exports/
+publisher-engine/data/
+publisher-engine/src/assets/
+snapshots/

@@ -156,3 +156,11 @@ cd "$HOME/hub/AI-WorkSpace/01_projects/ai-spore/web/ai-spore-site" && PORT=3000 
 - **What v1 does NOT do:**
   - No on-chain escrow/VRF yet (explicitly off-chain lock + public verifiability only)
 
+
+---
+
+# SSOT POINTER
+- Current state: `memory/state.md`
+- Locked decisions: `memory/decisions.md`
+- Project overview: `memory/project.md`
+
