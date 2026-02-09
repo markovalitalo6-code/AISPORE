@@ -67,6 +67,16 @@ Orchestrator: OJ
   /api-test shows buttons:
   - Ping Health (calls /api/health)
   - Calc Tickets (calls /api/calc/tickets)
+### UI full-flow verification (api-test)
+
+- /api-test UI verifies full v1 core loop end-to-end:
+  - Ticket calculation
+  - Raffle execution
+  - Reward lock (ADMIN only)
+  - Public readback by-week and by-id
+- Admin gating confirmed:
+  - Lock requires x-admin-key
+  - Read endpoints are public
 
 ---
 
@@ -99,7 +109,11 @@ cd "$HOME/hub/AI-WorkSpace/01_projects/ai-spore/web/ai-spore-site" && PORT=3000 
 
 ## 7) CHANGE LOG
 
-### 2026-02-05
+### 2026-02-09
+- Admin gating verified (lock = admin-only, read = public)
+- Weekly reward lock confirmed idempotent (same week → same record)
+- UI full-flow verified via /api-test (lock + readback by-week/by-id)
+
 - API read-only router stable (health, whoami, calc tickets, raffle/run)
 - Reward lock endpoint works (POST /reward/lock)
 - Weekly lock script works (scripts/run_weekly_lock.ts)

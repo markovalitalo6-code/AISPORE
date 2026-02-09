@@ -31,3 +31,17 @@ cd "$HOME/hub/AI-WorkSpace/01_projects/ai-spore/web/ai-spore-site" && PORT=3000 
 1) Ensure admin gating is correct (lock requires admin key, public reads ok)
 2) Keep weekly lock script stable (creates lock + readback by id/week)
 3) Commit + push frequently (small diffs, always SSOT updated)
+## v1 verification status
+
+- Step 1: Admin gating — VERIFIED
+  - reward lock requires x-admin-key
+  - readback endpoints are public
+
+- Step 2: Weekly lock idempotency — VERIFIED
+  - same week cannot create duplicate locks
+  - deterministic result (same id, entriesHash, winnerUserId)
+
+- Step 3: UI full-flow — VERIFIED
+  - api-test UI completes full loop:
+    ticket calc → raffle → reward lock → readback
+
