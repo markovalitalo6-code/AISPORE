@@ -23,10 +23,11 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install deps
+            - name: Install deps
         run: |
           npm init -y >/dev/null 2>&1 || true
-          npm i @google/generative-ai >/dev/null
+          npm i @google/genai >/dev/null
+
 
       - name: Build diff (base..head)
         run: |
