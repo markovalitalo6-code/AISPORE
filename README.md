@@ -27,4 +27,5 @@ What v1 does NOT do:
 - No yield or ROI promises
 - No on-chain custody
 - No Telegram-triggered payouts
+<!-- gemini review trigger -->
 
