@@ -8,10 +8,10 @@ on:
 permissions:
   contents: read
   pull-requests: write
+
 jobs:
   gemini_review:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,15 +32,20 @@ jobs:
         run: |
           BASE="${{ github.event.pull_request.base.sha }}"
           HEAD="${{ github.event.pull_request.head.sha }}"
-          echo "PR_TITLE<<EOF" >> $GITHUB_ENV
-          echo "${{ github.event.pull_request.title }}" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-          echo "PR_BODY<<EOF" >> $GITHUB_ENV
-          echo "${{ github.event.pull_request.body }}" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-          echo "PR_DIFF<<EOF" >> $GITHUB_ENV
-          git diff --unified=3 "$BASE" "$HEAD" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+
+          {
+            echo "PR_TITLE<<EOF"
+            echo "${{ github.event.pull_request.title }}"
+            echo "EOF"
+
+            echo "PR_BODY<<EOF"
+            echo "${{ github.event.pull_request.body }}"
+            echo "EOF"
+
+            echo "PR_DIFF<<EOF"
+            git diff --unified=3 "$BASE" "$HEAD"
+            echo "EOF"
+          } >> "$GITHUB_ENV"
 
       - name: Run Gemini review
         env:
@@ -54,11 +59,10 @@ jobs:
           script: |
             const fs = require('fs');
             const body = fs.readFileSync('gemini_review.md', 'utf8');
-            const issue_number = context.payload.pull_request.number;
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number,
+              issue_number: context.payload.pull_request.number,
               body: "## 🤖 Gemini Review\n\n" + body
             });
 
