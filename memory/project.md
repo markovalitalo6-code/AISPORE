@@ -20,3 +20,15 @@ Telegram integration later, only after core loop is stable and audited.
 - Anyone can reproduce draw result from public inputs
 - Lock is immutable (append-only) and readable by id and by week
 - UI can perform full flow locally without manual curl
+## Next phase gates (post-v1)
+
+Telegram integration GO only if:
+- v1 runnable skeleton is frozen and tagged
+- admin-gating and idempotency verified
+- public verification documented
+
+On-chain / VRF GO only if:
+- off-chain v1 runs stable for >= N weeks
+- no replay or determinism issues observed
+- explicit scope doc approved
+
