@@ -28,7 +28,7 @@ jobs:
           npm init -y >/dev/null 2>&1 || true
           npm i @google/genai >/dev/null 2>&1
 
-      - name: Guard: block unsupported models
+      - name: Guard unsupported models
         run: |
           echo "Checking scripts/gemini_review.mjs for unsupported model ids..."
           if grep -E "gemini-1\.5-(flash|pro)" -n scripts/gemini_review.mjs; then
