@@ -5,6 +5,10 @@ Maintainer: Marko
 Orchestrator: OJ
 
 ## What works (confirmed)
+- Weekly lock idempotency verified (2026-W09):
+  - run twice same week => same id/hash/winner
+  - different SEED env var does NOT change locked week (returns existing record)
+
 - API (Express + ts-node) runs on **:3100**
 - WEB (Next.js ai-spore-site) runs on **:3000**
 - Next rewrite in web proxies **/api/* -> http://localhost:3100/***
