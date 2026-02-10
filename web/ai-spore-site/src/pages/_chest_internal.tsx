@@ -20,18 +20,20 @@ type RewardLockRecord = {
   createdAt?: string;
 };
 
+type Phase = "closed" | "opening" | "opened";
+
 export default function ChestPage() {
   const defaultWeek = useMemo(() => isoWeekString(), []);
   const [week, setWeek] = useState(defaultWeek);
   const [record, setRecord] = useState<RewardLockRecord | null>(null);
   const [status, setStatus] = useState<"idle"|"loading"|"locked"|"not_locked"|"error">("idle");
   const [err, setErr] = useState<string | null>(null);
-  const [opened, setOpened] = useState(false);
+  const [phase, setPhase] = useState<Phase>("closed");
 
   async function load() {
     setStatus("loading");
     setErr(null);
-    setOpened(false);
+    setPhase("closed");
     try {
       const r = await fetch(`/api/reward/by-week/${encodeURIComponent(week)}`);
       if (r.status === 404) {
@@ -52,6 +54,13 @@ export default function ChestPage() {
 
   useEffect(() => { load(); }, []);
 
+  function openChest() {
+    if (status !== "locked") return;
+    if (phase === "opened" || phase === "opening") return;
+    setPhase("opening");
+    window.setTimeout(() => setPhase("opened"), 950);
+  }
+
   const banner = (() => {
     if (status === "loading") return { text: "Loading…", tone: "#666" };
     if (status === "locked") return { text: "LOCKED ✅ Winner ready", tone: "#0a7a32" };
@@ -60,8 +69,25 @@ export default function ChestPage() {
     return { text: "—", tone: "#666" };
   })();
 
+  const canOpen = status === "locked";
+
   return (
     <div style={{ fontFamily: "ui-sans-serif, system-ui", padding: 24, maxWidth: 920, margin: "0 auto" }}>
+      <style jsx global>{`
+        @keyframes lidOpen {
+          0%   { transform: translate(-50%, -100%) rotateX(0deg); }
+          100% { transform: translate(-50%, -100%) rotateX(70deg); }
+        }
+        @keyframes glowPulse {
+          0%, 100% { opacity: 0.25; transform: translate(-50%, -50%) scale(1); }
+          50% { opacity: 0.55; transform: translate(-50%, -50%) scale(1.05); }
+        }
+        @keyframes popIn {
+          0% { opacity: 0; transform: translateY(10px) scale(0.98); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
+
       <h1 style={{ fontSize: 28, marginBottom: 6 }}>AISPORE — Chest / Event</h1>
       <div style={{ marginBottom: 16, padding: "10px 12px", borderRadius: 12, border: "1px solid #e5e5e5" }}>
         <b style={{ color: banner.tone }}>{banner.text}</b>
@@ -89,33 +115,123 @@ export default function ChestPage() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         <div style={{ padding: 16, borderRadius: 16, border: "1px solid #e5e5e5", background: "#fafafa" }}>
           <h2 style={{ marginTop: 0, fontSize: 18 }}>Chest</h2>
+
+          {/* Chest stage */}
           <div
             style={{
-              height: 220,
+              height: 240,
               borderRadius: 18,
               border: "1px solid #e5e5e5",
-              background: opened ? "#fef3c7" : "#111827",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: opened ? "#111827" : "#f9fafb",
-              fontSize: 18
+              background: "#0b1220",
+              position: "relative",
+              overflow: "hidden"
             }}
           >
-            {opened ? (record ? `WINNER: ${record.winnerUserId}` : "No lock yet") : "CLOSED CHEST"}
+            {/* Glow when locked */}
+            <div
+              style={{
+                position: "absolute",
+                left: "50%",
+                top: "50%",
+                width: 260,
+                height: 260,
+                borderRadius: 260,
+                background: canOpen ? "#fbbf24" : "#94a3b8",
+                filter: "blur(40px)",
+                transform: "translate(-50%, -50%)",
+                opacity: canOpen ? 0.35 : 0.15,
+                animation: canOpen ? "glowPulse 1.6s ease-in-out infinite" : "none"
+              }}
+            />
+
+            {/* Base */}
+            <div
+              style={{
+                position: "absolute",
+                left: "50%",
+                bottom: 54,
+                width: 280,
+                height: 110,
+                transform: "translateX(-50%)",
+                borderRadius: 18,
+                background: "#111827",
+                border: "1px solid rgba(255,255,255,0.08)",
+                boxShadow: "0 14px 30px rgba(0,0,0,0.35)"
+              }}
+            />
+
+            {/* Lid */}
+            <div
+              style={{
+                position: "absolute",
+                left: "50%",
+                bottom: 164,
+                width: 280,
+                height: 70,
+                transform: "translate(-50%, -100%) rotateX(0deg)",
+                transformOrigin: "50% 100%",
+                borderRadius: 18,
+                background: "#0f172a",
+                border: "1px solid rgba(255,255,255,0.08)",
+                boxShadow: "0 10px 18px rgba(0,0,0,0.35)",
+                animation: phase === "opening" ? "lidOpen 0.9s ease-out forwards" : "none"
+              }}
+            />
+
+            {/* Content */}
+            <div
+              style={{
+                position: "absolute",
+                left: "50%",
+                bottom: 88,
+                transform: "translateX(-50%)",
+                color: "#f9fafb",
+                textAlign: "center",
+                width: "80%"
+              }}
+            >
+              {phase === "closed" && (
+                <div style={{ opacity: 0.9 }}>
+                  <div style={{ fontSize: 18, fontWeight: 700 }}>CLOSED</div>
+                  <div style={{ fontSize: 13, opacity: 0.7, marginTop: 6 }}>
+                    {canOpen ? "Winner is ready — open the chest." : "Waiting for weekly lock."}
+                  </div>
+                </div>
+              )}
+
+              {phase === "opening" && (
+                <div style={{ opacity: 0.9 }}>
+                  <div style={{ fontSize: 18, fontWeight: 700 }}>OPENING…</div>
+                  <div style={{ fontSize: 13, opacity: 0.7, marginTop: 6 }}>Revealing…</div>
+                </div>
+              )}
+
+              {phase === "opened" && (
+                <div style={{ animation: "popIn 0.25s ease-out" }}>
+                  <div style={{ fontSize: 13, opacity: 0.8 }}>WINNER</div>
+                  <div style={{ fontSize: 26, fontWeight: 900, marginTop: 4 }}>
+                    {record ? record.winnerUserId : "—"}
+                  </div>
+                  <div style={{ fontSize: 12, opacity: 0.7, marginTop: 6 }}>
+                    (read-only from public by-week)
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <button
-            onClick={() => setOpened(true)}
-            disabled={status !== "locked"}
+            onClick={openChest}
+            disabled={!canOpen}
             style={{
               marginTop: 12,
               width: "100%",
               padding: "10px 12px",
               borderRadius: 14,
               border: "1px solid #ddd",
-              cursor: status === "locked" ? "pointer" : "not-allowed",
-              opacity: status === "locked" ? 1 : 0.5
+              cursor: canOpen ? "pointer" : "not-allowed",
+              opacity: canOpen ? 1 : 0.5,
+              fontWeight: 700
             }}
           >
             Open chest (read-only)

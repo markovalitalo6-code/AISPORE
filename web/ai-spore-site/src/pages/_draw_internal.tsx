@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 
 function isoWeekString(d = new Date()) {
-  // ISO week: https://en.wikipedia.org/wiki/ISO_week_date
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   const dayNum = date.getUTCDay() || 7;
   date.setUTCDate(date.getUTCDate() + 4 - dayNum);
@@ -27,30 +26,37 @@ export default function DrawPage() {
   const [week, setWeek] = useState(defaultWeek);
   const [health, setHealth] = useState<string>("(loading)");
   const [data, setData] = useState<RewardLockRecord | null>(null);
+  const [status, setStatus] = useState<"idle" | "loading" | "locked" | "not_locked" | "error">("idle");
   const [err, setErr] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
   async function load() {
-    setLoading(true);
+    setStatus("loading");
     setErr(null);
     try {
-      // Health (optional, but helps confirm wiring)
       const h = await fetch("/api/health");
       setHealth(h.ok ? "OK" : `HTTP ${h.status}`);
 
-      // Readback by week (public)
       const r = await fetch(`/api/reward/by-week/${encodeURIComponent(week)}`);
+
+      if (r.status === 404) {
+        // normal state: not locked yet
+        setData(null);
+        setStatus("not_locked");
+        return;
+      }
+
       if (!r.ok) {
         const txt = await r.text().catch(() => "");
         throw new Error(`by-week failed: HTTP ${r.status}${txt ? ` — ${txt}` : ""}`);
       }
+
       const json = (await r.json()) as RewardLockRecord;
       setData(json);
+      setStatus("locked");
     } catch (e: any) {
       setData(null);
+      setStatus("error");
       setErr(e?.message ?? String(e));
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -75,15 +81,21 @@ export default function DrawPage() {
         </label>
         <button
           onClick={load}
-          disabled={loading}
+          disabled={status === "loading"}
           style={{ padding: "8px 12px", borderRadius: 10, border: "1px solid #ddd", cursor: "pointer" }}
         >
-          {loading ? "Loading…" : "Refresh"}
+          {status === "loading" ? "Loading…" : "Refresh"}
         </button>
         <span style={{ opacity: 0.7 }}>Default: {defaultWeek}</span>
       </div>
 
-      {err && (
+      {status === "not_locked" && (
+        <div style={{ padding: 14, borderRadius: 12, border: "1px solid #fde68a", background: "#fffbeb", marginBottom: 18 }}>
+          <b>Not locked yet</b> — no record exists for this week.
+        </div>
+      )}
+
+      {status === "error" && err && (
         <div style={{ padding: 14, borderRadius: 12, border: "1px solid #f5c2c7", background: "#fff5f5", marginBottom: 18 }}>
           <b>Error:</b> {err}
         </div>
@@ -92,7 +104,7 @@ export default function DrawPage() {
       <div style={{ padding: 16, borderRadius: 14, border: "1px solid #e5e5e5", background: "#fafafa" }}>
         <h2 style={{ fontSize: 18, marginTop: 0 }}>Locked record</h2>
         {!data ? (
-          <div style={{ opacity: 0.75 }}>No record loaded yet.</div>
+          <div style={{ opacity: 0.75 }}>No record loaded.</div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "200px 1fr", rowGap: 10, columnGap: 14 }}>
             <div style={{ opacity: 0.7 }}>week</div><div><b>{data.week}</b></div>
