@@ -43,3 +43,35 @@ Next steps (strict, no new features):
 2) Verify rate limit behavior doesn’t block normal usage (only abuse)
 3) Keep committing SSOT updates for each verified step
 
+---
+
+## CURRENT STATE — SNAPSHOT (2026-02-10)
+
+AISPORE v1 skeleton is FUNCTIONALLY VERIFIED and HARDENED.
+
+### What is DONE (locked facts)
+- Weekly reward lock:
+  - Idempotent (same week → same id/hash/winner)
+  - Seed immutable after first lock
+- Admin gating:
+  - POST /reward/lock requires x-admin-key
+  - Public read endpoints are open
+- Public readback:
+  - GET /reward/:id → OK
+  - GET /reward/by-week/:week → OK
+- Rate limiting:
+  - Basic express-rate-limit applied to public endpoints
+  - Admin-gated routes unaffected
+- CI:
+  - Gemini PR review workflow active
+  - Guard blocks unsupported Gemini models
+- Documentation:
+  - All verification steps recorded in memory/state.md
+  - Decisions locked in memory/decisions.md
+
+### How to run (local)
+Terminal A — API:
+```bash
+cd src/api
+ADMIN_KEY=dev_admin PORT=3100 pnpm run dev
+

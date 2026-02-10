@@ -80,3 +80,17 @@ Next single thread:
 2) Confirm rate limit returns 429 when exceeded, but normal api-test flow works
 3) Proceed to B and C hardening only if needed (otherwise stay locked)
 
+## Step A: API hardening (rate limiting) — VERIFIED
+
+Merged: 2026-02-10
+
+- express-rate-limit added to API
+- Public endpoints protected with basic per-IP limit
+- Admin-gated endpoints still require x-admin-key
+- Manual verification done:
+  - Normal usage returns 200
+  - Burst usage returns 429 (Too Many Requests)
+- No impact on weekly lock idempotency or readback
+
+Status: LOCKED (v1)
+
