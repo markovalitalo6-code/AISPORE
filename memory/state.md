@@ -49,3 +49,17 @@ cd "$HOME/hub/AI-WorkSpace/01_projects/ai-spore/web/ai-spore-site" && PORT=3000 
   - api-test UI completes full loop:
     ticket calc → raffle → reward lock → readback
 
+
+## Step 1: Admin gating + public readback — VERIFIED (manual curl)
+
+Verified on: 2026-02-10
+
+- POST /reward/lock without admin key => 401 Unauthorized ✅
+- POST /reward/lock with x-admin-key => 200 + locked record ✅
+- GET /reward/:id (public) => 200 + same record ✅
+- GET /reward/by-week/:week (public) => 200 + same record ✅
+
+Proof sample (week 2026-WXX):
+- id: 3d1c92a890a5563561d3811d
+- entriesHash: 21dcd949ffb3f784732f006e307592b81b52c5fa95043175761ae9cfc622fbd7
+- winnerUserId: u1
