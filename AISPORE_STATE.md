@@ -180,3 +180,9 @@ cd "$HOME/hub/AI-WorkSpace/01_projects/ai-spore/web/ai-spore-site" && PORT=3000 
 
 
 - Telegram integration plan: `memory/integrations_telegram.md`
+
+## 2026-02-10 — UPDATE
+- Hardening A (basic rate limits) merged to master.
+- SSOT/memory updated to reflect current locked loop + verification status.
+- No changes to Telegram/badges/snake in this phase.
+

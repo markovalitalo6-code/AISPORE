@@ -32,3 +32,14 @@ On-chain / VRF GO only if:
 - no replay or determinism issues observed
 - explicit scope doc approved
 
+
+## 2026-02-10 — Status
+- v1 runnable skeleton loop is stable and verified.
+- Hardening A (rate limits) merged.
+- Work policy unchanged: no Telegram/badges/snake changes until core is locked and committed.
+
+Next steps (strict, no new features):
+1) Run API+WEB from master and verify api-test flow works end-to-end
+2) Verify rate limit behavior doesn’t block normal usage (only abuse)
+3) Keep committing SSOT updates for each verified step
+
