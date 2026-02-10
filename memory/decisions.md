@@ -26,3 +26,22 @@ Last updated: 2026-02-09
 - Scope lock remains: Telegram/badges/snake are frozen until core loop is stable + audited.
 - SSOT must be updated on every meaningful verification.
 
+## Decision A — API rate limiting (v1 hardening)
+
+Date: 2026-02-10  
+Status: LOCKED
+
+Decision:
+- Add basic rate limiting to public API endpoints using express-rate-limit
+- Keep admin-gated endpoints protected by x-admin-key
+- Rate limits apply only to public read / compute endpoints
+
+Rationale:
+- Protect against abuse, scraping, and accidental overload
+- No impact on reward locking correctness or determinism
+- Safe for v1 skeleton and adjustable later if needed
+
+Notes:
+- Limits verified manually
+- Weekly lock, idempotency, and readback remain unchanged
+
