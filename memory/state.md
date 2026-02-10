@@ -94,3 +94,19 @@ Merged: 2026-02-10
 
 Status: LOCKED (v1)
 
+
+## 2026-02-10 — Local master run verified (API+WEB end-to-end)
+
+Verified:
+- API (:3100) started with ADMIN_KEY=dev_admin
+- WEB (:3000) started and /api rewrite -> :3100 works
+- api-test UI full loop OK:
+  Health -> OK
+  Calc Tickets -> OK
+  Raffle Run -> OK
+  Reward Lock (ADMIN) -> OK with x-admin-key
+  Get by-week -> OK (reads public)
+
+Notes:
+- No scope expansion performed (TG/badges/snake untouched)
+- Hardening A (rate limit) remains active; normal flow unaffected
