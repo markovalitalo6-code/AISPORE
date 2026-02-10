@@ -6,15 +6,19 @@ import rateLimit from "express-rate-limit";
 
 const app = express();
 
-// AISPORE_RATE_LIMITERS (v1 hardening)
-app.set("trust proxy", 1);
-const publicLimiter = rateLimit({ windowMs: 60_000, max: 120, standardHeaders: true, legacyHeaders: false });
-const adminLimiter  = rateLimit({ windowMs: 60_000, max: 30,  standardHeaders: true, legacyHeaders: false });
-app.use(publicLimiter);
-app.use("/reward/lock", adminLimiter);
+
+// AISPORE_RATE_LIMITERS (v1 hardening - visible test)
+const aisporePublicLimiter = rateLimit({
+  windowMs: 10_000, // 10s
+  limit: 5,         // 5 requests per 10s per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 app.use(express.json());
 
+// AISPORE_APPLY_RATE_LIMITERS
+app.use(aisporePublicLimiter);
 // AUTH
 app.use("/auth", authRouter);
 
