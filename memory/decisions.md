@@ -20,3 +20,9 @@ Last updated: 2026-02-09
 - No secrets committed (.env*, keys)
 - Runtime artifacts ignored (events.jsonl, canon.json, .next, node_modules)
 - SSOT docs live in repo and are updated as work progresses
+
+## 2026-02-10 — Locked operational decisions
+- Hardening A merged: basic API rate limits are acceptable for v1 safety.
+- Scope lock remains: Telegram/badges/snake are frozen until core loop is stable + audited.
+- SSOT must be updated on every meaningful verification.
+

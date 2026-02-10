@@ -63,3 +63,20 @@ Proof sample (week 2026-WXX):
 - id: 3d1c92a890a5563561d3811d
 - entriesHash: 21dcd949ffb3f784732f006e307592b81b52c5fa95043175761ae9cfc622fbd7
 - winnerUserId: u1
+
+## 2026-02-10 — HARDENING A MERGED (rate limit)
+
+Verified:
+- harden-v1-a merged to master (express-rate-limit basic limiter applied)
+- API/Web core loop remains: ticket calc → raffle → reward lock (admin) → readback (public)
+- Weekly lock idempotency remains VERIFIED (same week returns same id/hash/winner)
+
+Current focus (do not expand scope):
+- Keep Telegram/badges/snake untouched
+- Focus remains: ticket calc → raffle → reward lock → readback (+ admin gating) + SSOT updates
+
+Next single thread:
+1) Confirm master runs locally (API:3100, WEB:3000) after merge
+2) Confirm rate limit returns 429 when exceeded, but normal api-test flow works
+3) Proceed to B and C hardening only if needed (otherwise stay locked)
+
