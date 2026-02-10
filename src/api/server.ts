@@ -2,8 +2,17 @@ import express from "express";
 import { authRouter } from "./auth/router";
 import { readonlyRouter } from "./routes/readonly";
 import { rewardRouter } from "./routes/reward";
+import rateLimit from "express-rate-limit";
 
 const app = express();
+
+// AISPORE_RATE_LIMITERS (v1 hardening)
+app.set("trust proxy", 1);
+const publicLimiter = rateLimit({ windowMs: 60_000, max: 120, standardHeaders: true, legacyHeaders: false });
+const adminLimiter  = rateLimit({ windowMs: 60_000, max: 30,  standardHeaders: true, legacyHeaders: false });
+app.use(publicLimiter);
+app.use("/reward/lock", adminLimiter);
+
 app.use(express.json());
 
 // AUTH
