@@ -11,6 +11,7 @@
 4. Fetch locked record:
    - GET /reward/:id or /reward/by-week/:week
 5. Result must match exactly.
+
 ## How AISPORE v1 works (plain English)
 
 AISPORE v1 is a publicly verifiable, off-chain reward system.
