@@ -7,7 +7,8 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "agent:run": "DOTENV_CONFIG_PATH=.env.agent tsx scripts/agent-runner.ts"
   },
   "repository": {
     "type": "git",
