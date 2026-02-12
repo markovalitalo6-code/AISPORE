@@ -86,6 +86,14 @@ async function run(goal: string) {
       // run command as verification
       sh(`ALLOW_PATHS="${process.env.ALLOW_PATHS || "README.md"}" bash scripts/safety-check.sh`);
       const out = sh(CMD);
+      // If nothing changed, treat as failure and retry with a stricter instruction.
+      const changed = sh("git status --porcelain").trim();
+      if (!changed) {
+        lastError = "No changes produced by agent. Must output a real unified diff within ALLOW_PATHS.";
+        sh("git reset --hard");
+        continue;
+      }
+
       fs.mkdirSync('agent-runtime/logs', { recursive: true });
       fs.writeFileSync(`agent-runtime/logs/run_${Date.now()}.log`, out, 'utf8');
 
