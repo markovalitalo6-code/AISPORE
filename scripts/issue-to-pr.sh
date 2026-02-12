@@ -43,7 +43,7 @@ Constraints:
 - Do not modify memory/* or build/specs/*LOCKED*.
 - If task is unclear, make the smallest safe improvement.
 "
-pnpm agent:run "$PROMPT"
+ALLOW_PATHS="README.md" pnpm agent:run "$PROMPT"
 
 # 5) Commit changes (if any)
 if [[ -z "$(git status --porcelain)" ]]; then
