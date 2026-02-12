@@ -20,4 +20,5 @@ ticket calc → raffle → reward lock → readback
 - reward lock logic (idempotency / seed immutability)
 
 ## NEXT STEP
+Validate /live and /draw pages against /api/public/feed and confirm correct data rendering (week selector + latestDraw + pendingPayouts).
 Create SSOT-only memory docs (PROJECT_MAP + ACTIVE_CONTEXT) and push **docs-only** commit to GitHub.
