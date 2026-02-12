@@ -4,13 +4,14 @@
    - week
    - seed
    - entries (or entriesHash)
-2. Re-run raffle with the same seed + entries.
+2. Re-run the raffle with the same seed + entries.
 3. Compare:
    - winnerUserId
    - totalTickets
-4. Fetch locked record:
+4. Fetch the locked record:
    - GET /reward/:id or /reward/by-week/:week
-5. Result must match exactly.
+5. The result must match exactly.
+
 ## How AISPORE v1 works (plain English)
 
 AISPORE v1 is a publicly verifiable, off-chain reward system.
@@ -27,4 +28,3 @@ What v1 does NOT do:
 - No yield or ROI promises
 - No on-chain custody
 - No Telegram-triggered payouts
-
