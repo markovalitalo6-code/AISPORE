@@ -84,6 +84,7 @@ async function run(goal: string) {
 
     try {
       // run command as verification
+      sh(`ALLOW_PATHS="${process.env.ALLOW_PATHS || "README.md"}" bash scripts/safety-check.sh`);
       const out = sh(CMD);
       fs.mkdirSync('agent-runtime/logs', { recursive: true });
       fs.writeFileSync(`agent-runtime/logs/run_${Date.now()}.log`, out, 'utf8');

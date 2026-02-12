@@ -15,6 +15,23 @@ TITLE="$(gh issue view "$NUM" --repo "$REPO" --json title -q '.title')"
 BODY="$(gh issue view "$NUM" --repo "$REPO" --json body -q '.body')"
 URL="$(gh issue view "$NUM" --repo "$REPO" --json url -q '.url')"
 
+# ---- allowlist parsing (default: README only) ----
+ALLOW="README.md"
+ALLOW_LINE="$(printf '%s\n' "$BODY" | sed -n 's/^[[:space:]]*ALLOW:[[:space:]]*//p' | head -n 1 || true)"
+if [[ -n "${ALLOW_LINE:-}" ]]; then
+  # normalize whitespace
+  ALLOW="$(echo "$ALLOW_LINE" | tr -s ' ' | sed 's/^ *//;s/ *$//')"
+fi
+
+# hard blocklist regardless of ALLOW
+if echo " $ALLOW " | rg -q '(^| )memory/|(^| )build/specs/|LOCKED'; then
+  gh issue comment "$NUM" --repo "$REPO" --body "❌ Refusing: ALLOW contains forbidden paths (memory/ or build/specs/*LOCKED*)."
+  gh issue edit "$NUM" --repo "$REPO" --remove-label "run-agent" --add-label "agent-done" || true
+  exit 0
+fi
+# -----------------------------------------------
+
+
 echo "== Picking issue #$NUM =="
 echo "Title: $TITLE"
 echo "URL:   $URL"
@@ -43,7 +60,7 @@ Constraints:
 - Do not modify memory/* or build/specs/*LOCKED*.
 - If task is unclear, make the smallest safe improvement.
 "
-ALLOW_PATHS="README.md" pnpm agent:run "$PROMPT"
+ALLOW_PATHS="$ALLOW" pnpm agent:run "$PROMPT"
 
 # 5) Commit changes (if any)
 if [[ -z "$(git status --porcelain)" ]]; then
