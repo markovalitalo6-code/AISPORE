@@ -17,11 +17,13 @@ while IFS= read -r f; do
   [[ -z "$f" ]] && continue
   matched=0
   for a in $ALLOW; do
-    if [[ "$a" == */ ]]; then
-      [[ "$f" == "$a"* ]] && matched=1
-    else
-      [[ "$f" == "$a" ]] && matched=1
-    fi
+    # normalize token once (keep original meaning)
+    aa="$a"
+    aa="${aa%/}"
+    # exact file allow
+    if [[ "$f" == "$aa" ]]; then matched=1; break; fi
+    # directory allow: 'docs' or 'docs/' should allow docs/**
+    if [[ "$f" == "$aa/"* ]]; then matched=1; break; fi
   done
   if [[ $matched -eq 0 ]]; then
     echo "❌ safety-check: disallowed change: $f"
