@@ -5,7 +5,10 @@ REPO="markovalitalo6-code/AISPORE"
 LABEL="run-agent"
 
 # 1) Get newest issue with label
+NUM="${1:-}"
+if [[ -z "${NUM:-}" ]]; then
 NUM="$(gh issue list --repo "$REPO" --label "$LABEL" --limit 1 --json number -q '.[0].number' || true)"
+fi
 if [[ -z "${NUM}" || "${NUM}" == "null" ]]; then
   echo "No issues found with label $LABEL"
   exit 0
