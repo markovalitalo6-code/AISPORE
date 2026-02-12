@@ -61,3 +61,5 @@ publisher-engine/scripts/autopost_once.ts
 publisher-engine/scripts/autoposter_daemon.ts
 publisher-engine/scripts/rebuildCanon.ts
 publisher-engine/src/scheduler/tgAutopostDaemon.ts
+
+.env.agent
