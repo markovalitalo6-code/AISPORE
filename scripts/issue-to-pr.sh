@@ -35,6 +35,14 @@ fi
 echo "== Picking issue #$NUM =="
 echo "Title: $TITLE"
 echo "URL:   $URL"
+# Always mark issue processed to avoid infinite loops (even if no PR / no changes).
+mark_done() {
+  if [[ -n "${NUM:-}" && -n "${REPO:-}" ]]; then
+    gh issue edit "$NUM" --repo "$REPO" --remove-label "run-agent" --add-label "agent-done" >/dev/null 2>&1 || true
+  fi
+}
+trap mark_done EXIT
+
 echo
 
 BR="agent/issue-${NUM}-$(date +%Y%m%d-%H%M%S)"
