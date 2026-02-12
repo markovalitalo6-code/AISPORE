@@ -45,3 +45,7 @@ Notes:
 - Limits verified manually
 - Weekly lock, idempotency, and readback remain unchanged
 
+
+## 2026-02-12 — Decision
+Adopt local-first agent runner to eliminate copy/paste loop.
+Runner is infrastructure only and must not modify SSOT or LOCKED specs.
