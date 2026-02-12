@@ -1,10 +1,20 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 set -euo pipefail
 
-cd /Users/omistaja/hub/AI-WorkSpace/01_projects/ai-spore
+REPO="${REPO:-markovalitalo6-code/AISPORE}"
+LABEL="${LABEL:-run-agent}"
 
-git fetch origin >/dev/null 2>&1 || true
+cd "$(dirname "$0")/.."
+
 git checkout infra/agent-runner >/dev/null 2>&1 || true
-git pull --ff-only || true
+git pull --ff-only >/dev/null 2>&1 || true
 
-./scripts/issue-to-pr.sh
+while true; do
+  if gh issue list --repo "$REPO" --label "$LABEL" --limit 1 | rg -q '^#'; then
+    ./scripts/issue-to-pr.sh
+    echo "----"
+  else
+    echo "No issues found with label $LABEL"
+    break
+  fi
+done
