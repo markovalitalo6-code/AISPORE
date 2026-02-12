@@ -73,4 +73,8 @@ echo "PR: $PR_URL"
 
 # 7) Comment back on issue with PR link
 gh issue comment "$NUM" --repo "$REPO" --body "✅ Created PR: $PR_URL"
+
+# mark processed
+
+gh issue edit "$NUM" --repo "$REPO" --remove-label "run-agent" --add-label "agent-done"
 echo "Done."
