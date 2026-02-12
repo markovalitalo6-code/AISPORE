@@ -80,10 +80,11 @@ async function run(goal: string) {
     }
 
     // write file directly (no git apply)
-    fs.writeFileSync('README.md', newReadme, 'utf8');
-
+    fs.writeFileSync('agent-runtime/work.patch', patch, 'utf8');
     try {
       // run command as verification
+      sh("git apply --check agent-runtime/work.patch");
+      sh("git apply agent-runtime/work.patch");
       sh(`ALLOW_PATHS="${process.env.ALLOW_PATHS || "README.md"}" bash scripts/safety-check.sh`);
       const out = sh(CMD);
       // If nothing changed, treat as failure and retry with a stricter instruction.
