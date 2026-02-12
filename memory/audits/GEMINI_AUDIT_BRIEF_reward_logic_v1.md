@@ -1,4 +1,21 @@
 # GEMINI AUDIT BRIEF — AISPORE Reward Logic v1
+
+## IMPORTANT (READ THIS FIRST)
+You are auditing THIS MARKDOWN DOCUMENT ONLY:
+- File: memory/audits/GEMINI_AUDIT_BRIEF_reward_logic_v1.md
+- Scope: reward/incentive logic, abuse/sybil/whale, treasury sustainability, legal/comms risk.
+- Do NOT produce generic smart-contract advice (reentrancy, gas, SafeMath, forge tests) unless it directly applies.
+
+## REQUIRED OUTPUT FORMAT
+Return exactly:
+1) RED (must-fix before implementation)
+2) YELLOW (risk/needs decision)
+3) GREEN (confirmed safe/consistent)
+4) Concrete edits to the model (numbers/caps/wording) — minimal changes only.
+
+---
+
+# GEMINI AUDIT BRIEF — AISPORE Reward Logic v1
 Last updated: 2026-02-10
 Scope: reward/incentive logic sanity check (legal/comms risk, game theory abuse, treasury sustainability). No code audit.
 

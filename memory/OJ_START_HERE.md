@@ -1,23 +1,24 @@
-# OJ START HERE — AISPORE (SSOT pointer)
+# OJ_START_HERE — AISPORE SSOT
 
-Last updated: 2026-02-10
+## PROJECT
+AISPORE v1 — web-first community **hold & participation** system (Solana)
 
-If you are reading this in a new browser/chat:
-1) Open AISPORE_STATE.md first (repo root) — it is the SSOT top-level summary.
-2) Then read:
-   - memory/state.md (current verified status)
-   - memory/decisions.md (locked decisions, non-negotiables)
-   - memory/project.md (big picture + “done means”)
+## CURRENT MODE
+v1 runnable skeleton. Focus only:
+ticket calc → raffle → reward lock → readback
 
-Current mode:
-- v1 runnable skeleton
-- Focus only: ticket calc → raffle → reward lock (admin) → readback (public)
-- Weekly lock idempotency verified
-- Telegram/badges/snake untouched
+## LOCKED FACTS
+- HOLDING = PARTICIPATION (no staking, no ROI/yield language)
+- Treasury-first, never drains
+- Probabilistic ticket-based rewards
+- Anti-whale / anti-sybil protections
+- Web is SSOT, Telegram only announces/routes
 
-Ports:
-- API: 3100 (src/api)
-- WEB: 3000 (web/ai-spore-site) with /api/* rewrite to API
+## DO NOT TOUCH
+- build/specs/*LOCKED* (LOCKED spec)
+- treasury formulas / caps logic
+- reward lock logic (idempotency / seed immutability)
 
-Rule:
-- No new ideas. Only verify, lock, commit, update SSOT.
+## NEXT STEP
+Validate /live and /draw pages against /api/public/feed and confirm correct data rendering (week selector + latestDraw + pendingPayouts).
+Create SSOT-only memory docs (PROJECT_MAP + ACTIVE_CONTEXT) and push **docs-only** commit to GitHub.
