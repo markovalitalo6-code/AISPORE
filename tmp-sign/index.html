@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>AISPORE Phantom Sign</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 900px; margin: 24px auto; padding: 0 16px; }
+    textarea { width: 100%; height: 220px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    input { width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    button { padding: 10px 14px; margin: 8px 8px 8px 0; }
+    .row { margin: 10px 0; }
+    .ok { color: #0a7; }
+    .bad { color: #c00; }
+  </style>
+</head>
+<body>
+  <h2>AISPORE — Sign Message (Phantom)</h2>
+
+  <div class="row">
+    <button id="connect">1) Connect Phantom</button>
+    <span id="pub"></span>
+  </div>
+
+  <div class="row">
+    <div><b>2) Message to sign</b> (paste from API response exactly, incl. newlines):</div>
+    <textarea id="msg"></textarea>
+  </div>
+
+  <div class="row">
+    <button id="sign">3) Sign Message</button>
+  </div>
+
+  <div class="row">
+    <div><b>Signature (base64)</b> (copy this into SIGNATURE):</div>
+    <input id="sig" readonly />
+  </div>
+
+  <div class="row">
+    <div><b>Wallet public key</b> (must match what you used in challenge):</div>
+    <input id="wallet" readonly />
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function hasPhantom() {
+      return window.solana && window.solana.isPhantom;
+    }
+
+    function setStatus(text, ok=true) {
+      $("pub").textContent = text;
+      $("pub").className = ok ? "ok" : "bad";
+    }
+
+    $("connect").onclick = async () => {
+      try {
+        if (!hasPhantom()) throw new Error("Phantom not found. Install Phantom extension and refresh.");
+        const resp = await window.solana.connect();
+        $("wallet").value = resp.publicKey.toString();
+        setStatus("Connected: " + resp.publicKey.toString(), true);
+      } catch (e) {
+        setStatus(String(e?.message || e), false);
+      }
+    };
+
+    $("sign").onclick = async () => {
+      try {
+        if (!hasPhantom()) throw new Error("Phantom not found.");
+        const msg = $("msg").value;
+        if (!msg) throw new Error("Paste the message first.");
+        const enc = new TextEncoder().encode(msg);
+        // Phantom returns signature as Uint8Array
+        const signed = await window.solana.signMessage(enc, "utf8");
+        const sigBase64 = btoa(String.fromCharCode(...signed.signature));
+        $("sig").value = sigBase64;
+        setStatus("Signed OK. Copy signature.", true);
+      } catch (e) {
+        setStatus(String(e?.message || e), false);
+      }
+    };
+  </script>
+</body>
+</html>
