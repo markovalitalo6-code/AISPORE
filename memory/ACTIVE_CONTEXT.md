@@ -19,3 +19,6 @@ Known issues:
 
 Immediate next task:
 - Push SSOT memory docs only (OJ_START_HERE, PROJECT_MAP, ACTIVE_CONTEXT, decisions append).
+
+VALIDATION
+✅ /draw matches /api/public/feed (week selector, latestDraw, pendingPayouts verified)
