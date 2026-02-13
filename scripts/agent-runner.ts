@@ -1,99 +1,75 @@
-#!/usr/bin/env tsx
-
-/**
- * Agent runner (patch-based)
- * - Asks model for JSON { patch: "<unified diff>" }
- * - Writes patch to agent-runtime/work.patch
- * - git apply --check + git apply
- * - runs safety-check allowlist (ALLOW_PATHS)
- * - runs verification CMD (AGENT_CMD)
- * - requires real changes (git status --porcelain)
- */
-
-import fs from "node:fs";
-import path from "node:path";
-import { execSync } from "node:child_process";
-import dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
+import { execSync } from "child_process";
 import OpenAI from "openai";
 
-dotenv.config({ path: process.env.DOTENV_CONFIG_PATH || ".env.agent" });
-
-const MODEL = process.env.AGENT_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini";
-const MAX = Number(process.env.AGENT_MAX_ITERS || 6);
-
-// Default command can be a cheap no-op. You can set AGENT_CMD in .env.agent.
-const CMD = process.env.AGENT_CMD || "echo OK";
+const MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const MAX = Number(process.env.AGENT_MAX || 6);
+const CMD = process.env.AGENT_CMD || 'bash -lc "true"';
 
 function sh(cmd: string) {
-  return execSync(cmd, { stdio: "pipe", encoding: "utf8", shell: "/bin/zsh" });
+  return execSync(cmd, { stdio: ["ignore", "pipe", "pipe"] }).toString("utf8");
 }
 
 function ensureDir(p: string) {
   fs.mkdirSync(p, { recursive: true });
 }
 
-function readFileIfExists(p: string) {
-  try {
-    return fs.readFileSync(p, "utf8");
-  } catch {
-    return "";
+function normalizePatchText(t: string) {
+  let s = String(t || "").trim();
+
+  // Strip markdown fences if model returned ```diff ... ```
+  if (s.startsWith("```")) {
+    const lines = s.split("\n");
+    // drop first fence
+    lines.shift();
+    // drop last fence if present
+    if (lines.length && lines[lines.length - 1].startsWith("```")) lines.pop();
+    s = lines.join("\n").trim();
   }
+
+  return s;
+}
+
+function readContextForPrompt() {
+  // Keep this cheap and safe. We don’t need repo-wide dumps.
+  // Agent MUST rely on ALLOW_PATHS restriction + safety-check.
+  const head = sh("git rev-parse --short HEAD").trim();
+  return `REPO_HEAD=${head}`;
 }
 
 async function run(goal: string) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    console.error("❌ OPENAI_API_KEY missing in .env.agent (or environment).");
-    process.exit(1);
-  }
-
-  const client = new OpenAI({ apiKey });
-
-  const allow = (process.env.ALLOW_PATHS || "README.md").trim();
-
-  // Provide a small context payload to the model. Keep it tight.
-  // NOTE: if you want richer context later, add curated file reads here.
-  const readme = readFileIfExists("README.md");
+  const allow = process.env.ALLOW_PATHS || "README.md";
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   let lastError = "";
 
   for (let i = 1; i <= MAX; i++) {
-    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      {
-        role: "system",
-        content: [
-          "You are a cautious repo automation agent.",
-          "Return ONLY valid JSON (no markdown).",
-          "You MUST return a unified diff patch in field `patch`.",
-          "The patch MUST apply with `git apply`.",
-          "Only modify files within ALLOW_PATHS provided.",
-          "Do NOT touch memory/* or build/specs/*LOCKED*.",
-          "If unsure, do the smallest safe improvement.",
-        ].join("\n"),
-      },
-      {
-        role: "user",
-        content: [
-          `GOAL: ${goal}`,
-          ``,
-          `ALLOW_PATHS: ${allow}`,
-          ``,
-          `CURRENT README.md (exact):`,
-          `---`,
-          readme,
-          `---`,
-          ``,
-          `Return JSON like: {"patch":"<unified diff>"} `,
-        ].join("\n"),
-      },
-    ];
+    const context = readContextForPrompt();
+
+    const prompt = [
+      `TASK: ${goal}`,
+      ``,
+      `ALLOW_PATHS: ${allow}`,
+      `RULES:`,
+      `- Return ONLY valid JSON.`,
+      `- JSON shape MUST be: {"patch":"..."} (string).`,
+      `- patch MUST be a git unified diff that starts with: diff --git`,
+      `- patch MUST apply with: git apply`,
+      `- patch MUST only touch files within ALLOW_PATHS.`,
+      `- Do NOT include markdown fences unless inside the patch string (prefer NO fences).`,
+      ``,
+      `CONTEXT:`,
+      context,
+      lastError ? `\nLAST_ERROR:\n${lastError}\n` : "",
+    ].join("\n");
 
     let raw = "";
     try {
       const resp = await client.chat.completions.create({
         model: MODEL,
-        messages,
         temperature: 0,
+        messages: [{ role: "user", content: prompt }],
       });
       raw = (resp.choices[0]?.message?.content || "").trim();
     } catch (e: any) {
@@ -109,9 +85,18 @@ async function run(goal: string) {
       continue;
     }
 
-    const patchText = String(obj?.patch || "");
-    if (!patchText || patchText.length < 20) {
+    const patchTextRaw = String(obj?.patch || "");
+    if (!patchTextRaw || patchTextRaw.length < 20) {
       lastError = 'JSON missing "patch" or patch too short.';
+      continue;
+    }
+
+    const patch = normalizePatchText(patchTextRaw);
+
+    // HARD GUARD: must be real git diff
+    if (!patch.startsWith("diff --git ")) {
+      lastError =
+        'Invalid patch: missing "diff --git " header. Model returned non-git patch format.';
       continue;
     }
 
@@ -119,7 +104,7 @@ async function run(goal: string) {
     ensureDir("agent-runtime/logs");
 
     const patchPath = path.join("agent-runtime", "work.patch");
-    fs.writeFileSync(patchPath, patchText, "utf8");
+    fs.writeFileSync(patchPath, patch, "utf8");
 
     try {
       // Ensure clean working tree before applying
@@ -130,10 +115,10 @@ async function run(goal: string) {
       sh(`git apply --check "${patchPath}"`);
       sh(`git apply "${patchPath}"`);
 
-      // Enforce allowlist (must run after patch applied)
+      // Enforce allowlist AFTER patch applied
       sh(`ALLOW_PATHS="${allow}" bash scripts/safety-check.sh`);
 
-      // Require real changes
+      // Require real changes (non-empty)
       const changed = sh("git status --porcelain").trim();
       if (!changed) {
         lastError = "No changes produced by agent. Must output a real unified diff within ALLOW_PATHS.";
@@ -141,7 +126,7 @@ async function run(goal: string) {
         continue;
       }
 
-      // Verification command (optional)
+      // Optional verification command
       const out = sh(CMD);
       fs.writeFileSync(path.join("agent-runtime", "logs", `run_${Date.now()}.log`), out, "utf8");
 
