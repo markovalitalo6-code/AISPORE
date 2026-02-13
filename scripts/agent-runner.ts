@@ -1,67 +1,119 @@
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
+import dotenv from "dotenv";
 import OpenAI from "openai";
 
-const MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
-const MAX = Number(process.env.AGENT_MAX || 6);
-const CMD = process.env.AGENT_CMD || 'bash -lc "true"';
+/**
+ * Robust patch-based agent runner (future-proof)
+ * - Loads .env via DOTENV_CONFIG_PATH (e.g. .env.agent)
+ * - Calls OpenAI -> expects JSON { patch: "diff --git ..." }
+ * - Normalizes patch (strips ``` fences)
+ * - Enforces: must start with "diff --git "
+ * - Enforces: touched paths must be within ALLOW_PATHS
+ * - git reset/clean, git apply --check + apply, then safety-check allowlist
+ * - Retries up to AGENT_MAX_ITERS
+ */
 
-function sh(cmd: string) {
-  return execSync(cmd, { stdio: ["ignore", "pipe", "pipe"] }).toString("utf8");
+function sh(cmd: string): string {
+  return execSync(cmd, { stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" });
 }
 
 function ensureDir(p: string) {
   fs.mkdirSync(p, { recursive: true });
 }
 
-function normalizePatchText(t: string) {
+function normalizePatchText(t: string): string {
   let s = String(t || "").trim();
 
-  // Strip markdown fences if model returned ```diff ... ```
+  // Strip markdown fences if model returned ```diff ... ``` or ``` ... ```
   if (s.startsWith("```")) {
     const lines = s.split("\n");
-    // drop first fence
+    // drop first fence line
     lines.shift();
-    // drop last fence if present
-    if (lines.length && lines[lines.length - 1].startsWith("```")) lines.pop();
+    // drop last fence line if present
+    if (lines.length && lines[lines.length - 1].trim().startsWith("```")) lines.pop();
     s = lines.join("\n").trim();
   }
 
-  return s;
+  // Some models might wrap in extra whitespace
+  return s.trim() + "\n";
 }
 
-function readContextForPrompt() {
-  // Keep this cheap and safe. We don’t need repo-wide dumps.
-  // Agent MUST rely on ALLOW_PATHS restriction + safety-check.
-  const head = sh("git rev-parse --short HEAD").trim();
-  return `REPO_HEAD=${head}`;
+function parseAllowList(raw: string): string[] {
+  // allow "docs/" or "docs/,scripts/" or "docs/ scripts/"
+  return raw
+    .split(/[,\s]+/g)
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
+function isAllowedPath(filePath: string, allowList: string[]): boolean {
+  const p = filePath.replace(/^(\.\/)+/, "");
+  for (const a0 of allowList) {
+    const a = a0.replace(/^(\.\/)+/, "");
+    if (!a) continue;
+    if (a.endsWith("/")) {
+      if (p.startsWith(a)) return true;
+    } else {
+      if (p === a) return true;
+      // also accept "docs" meaning "docs/"
+      if (a === "docs" && p.startsWith("docs/")) return true;
+    }
+  }
+  return false;
+}
+
+function touchedPathsFromPatch(patch: string): string[] {
+  const out: string[] = [];
+  const re = /^diff --git a\/(.+?) b\/(.+?)\s*$/gm;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(patch))) {
+    const a = m[1];
+    // prefer a-path unless it's /dev/null
+    if (a && a !== "/dev/null") out.push(a);
+  }
+  return Array.from(new Set(out));
 }
 
 async function run(goal: string) {
-  const allow = process.env.ALLOW_PATHS || "README.md";
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  dotenv.config({ path: process.env.DOTENV_CONFIG_PATH || ".env" });
 
-  let lastError = "";
+  const apiKey = process.env.OPENAI_API_KEY || "";
+  if (!apiKey) {
+    console.error("❌ OPENAI_API_KEY missing (check DOTENV_CONFIG_PATH / .env.agent).");
+    process.exit(1);
+  }
 
+  const MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
+  const MAX = Number(process.env.AGENT_MAX_ITERS || 6);
+  const allowRaw = process.env.ALLOW_PATHS || "README.md";
+  const allowList = parseAllowList(allowRaw);
+  const CMD = process.env.AGENT_CMD || "echo_OK";
+
+  const client = new OpenAI({ apiKey });
+
+  ensureDir("agent-runtime");
+  ensureDir("agent-runtime/logs");
+
+  let lastError = "unknown";
   for (let i = 1; i <= MAX; i++) {
-    const context = readContextForPrompt();
-
-    const prompt = [
-      `TASK: ${goal}`,
-      ``,
-      `ALLOW_PATHS: ${allow}`,
-      `RULES:`,
-      `- Return ONLY valid JSON.`,
-      `- JSON shape MUST be: {"patch":"..."} (string).`,
-      `- patch MUST be a git unified diff that starts with: diff --git`,
-      `- patch MUST apply with: git apply`,
-      `- patch MUST only touch files within ALLOW_PATHS.`,
-      `- Do NOT include markdown fences unless inside the patch string (prefer NO fences).`,
-      ``,
-      `CONTEXT:`,
-      context,
-      lastError ? `\nLAST_ERROR:\n${lastError}\n` : "",
+    // keep prompt extremely explicit to stop README “helpfulness”
+    const strict = [
+      "You are a code agent. Return ONLY JSON.",
+      `Goal: ${goal}`,
+      "",
+      "HARD REQUIREMENTS:",
+      '1) Return JSON in the shape: {"patch":"..."}',
+      '2) patch MUST be a valid unified git diff and MUST start with: diff --git',
+      "3) patch MUST apply with: git apply",
+      `4) patch MUST ONLY modify files inside ALLOW_PATHS: ${allowRaw}`,
+      "5) Do NOT modify README unless README is inside ALLOW_PATHS explicitly.",
+      "6) Do NOT include markdown fences. No ``` blocks.",
+      "",
+      "If you are unsure, make the smallest safe change inside ALLOW_PATHS.",
+      "",
+      "Return ONLY JSON. No commentary.",
     ].join("\n");
 
     let raw = "";
@@ -69,7 +121,7 @@ async function run(goal: string) {
       const resp = await client.chat.completions.create({
         model: MODEL,
         temperature: 0,
-        messages: [{ role: "user", content: prompt }],
+        messages: [{ role: "user", content: strict }],
       });
       raw = (resp.choices[0]?.message?.content || "").trim();
     } catch (e: any) {
@@ -93,15 +145,24 @@ async function run(goal: string) {
 
     const patch = normalizePatchText(patchTextRaw);
 
-    // HARD GUARD: must be real git diff
-    if (!patch.startsWith("diff --git ")) {
+    // Guard 1: must be git-style diff
+    if (!patch.trimStart().startsWith("diff --git ")) {
       lastError =
-        'Invalid patch: missing "diff --git " header. Model returned non-git patch format.';
+        'Invalid patch: missing "diff --git" header. Model must output git-style unified diff.';
       continue;
     }
 
-    ensureDir("agent-runtime");
-    ensureDir("agent-runtime/logs");
+    // Guard 2: enforce ALLOW_PATHS by parsing diff headers
+    const touched = touchedPathsFromPatch(patch);
+    if (!touched.length) {
+      lastError = "Invalid patch: no diff --git file headers found.";
+      continue;
+    }
+    const bad = touched.filter((p) => !isAllowedPath(p, allowList));
+    if (bad.length) {
+      lastError = `Patch touches disallowed paths: ${bad.join(", ")} (ALLOW_PATHS=${allowRaw})`;
+      continue;
+    }
 
     const patchPath = path.join("agent-runtime", "work.patch");
     fs.writeFileSync(patchPath, patch, "utf8");
@@ -115,10 +176,10 @@ async function run(goal: string) {
       sh(`git apply --check "${patchPath}"`);
       sh(`git apply "${patchPath}"`);
 
-      // Enforce allowlist AFTER patch applied
-      sh(`ALLOW_PATHS="${allow}" bash scripts/safety-check.sh`);
+      // Enforce allowlist (must run after patch applied)
+      sh(`ALLOW_PATHS="${allowRaw}" bash scripts/safety-check.sh`);
 
-      // Require real changes (non-empty)
+      // Require real changes
       const changed = sh("git status --porcelain").trim();
       if (!changed) {
         lastError = "No changes produced by agent. Must output a real unified diff within ALLOW_PATHS.";
@@ -126,7 +187,7 @@ async function run(goal: string) {
         continue;
       }
 
-      // Optional verification command
+      // Optional verification command (kept for future)
       const out = sh(CMD);
       fs.writeFileSync(path.join("agent-runtime", "logs", `run_${Date.now()}.log`), out, "utf8");
 
@@ -137,6 +198,7 @@ async function run(goal: string) {
       lastError = String(e?.message || e);
       try {
         sh("git reset --hard");
+        sh("git clean -fd");
       } catch {}
       continue;
     }
