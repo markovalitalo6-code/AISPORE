@@ -117,16 +117,20 @@ async function run(goal: string) {
     ].join("\n");
 
     let raw = "";
-    try {
-      const resp = await client.chat.completions.create({
-        model: MODEL,
-        temperature: 0,
-        messages: [{ role: "user", content: strict }],
-      });
-      raw = (resp.choices[0]?.message?.content || "").trim();
-    } catch (e: any) {
-      lastError = `OpenAI call failed: ${String(e?.message || e)}`;
-      continue;
+    if (process.env.AGENT_PATCH_JSON && process.env.AGENT_PATCH_JSON.trim().length > 0) {
+      raw = process.env.AGENT_PATCH_JSON.trim();
+    } else {
+      try {
+        const resp = await client.chat.completions.create({
+          model: MODEL,
+          temperature: 0,
+          messages: [{ role: "user", content: strict }],
+        });
+        raw = (resp.choices[0]?.message?.content || "").trim();
+      } catch (e: any) {
+        lastError = `OpenAI call failed: ${String(e?.message || e)}`;
+        continue;
+      }
     }
 
     let obj: any;
