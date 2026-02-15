@@ -156,6 +156,12 @@ async function run(goal: string) {
       continue;
     }
 
+    // Guard 2: reject wrapped lines / broken continuations (prevents corrupt patches)
+    if (/\\\n/.test(patch) || /\\\r\n/.test(patch) || /\\$/.test(patch.split("\n").slice(0,200).join("\n"))) {
+      lastError = "Invalid patch: contains wrapped lines (\\ + newline). Regenerate patch with no wrapped lines.";
+      continue;
+    }
+
     // Guard 2: enforce ALLOW_PATHS by parsing diff headers
     const touched = touchedPathsFromPatch(patch);
     if (!touched.length) {
